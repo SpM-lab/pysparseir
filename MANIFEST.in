@@ -1,6 +1,11 @@
-include libsparseir/src/*.cpp
-include libsparseir/include/sparseir/*.h
-include Makefile.bundle
-include lib/*.so
-include lib/*.dylib
-include lib/*.dll 
+include README.md
+include LICENSE
+include setup.cfg
+
+recursive-include libsparseir/deps *
+recursive-include libsparseir/include *
+recursive-include libsparseir/src *
+include libsparseir/Makefile.bundle
+include libsparseir/build_capi.sh
+
+recursive-include lib *.so *.dylib *.dll 
