@@ -98,6 +98,7 @@ def ensure_dependencies():
     
     # Create deps directory inside libsparseir
     deps_dir = os.path.join(libsparseir_dir, 'deps')
+    print(f"Creating deps directory: {deps_dir}")
     os.makedirs(deps_dir, exist_ok=True)
     
     # Download and extract Eigen3
@@ -122,22 +123,31 @@ def ensure_dependencies():
 
 
 def ensure_libsparseir():
-    """Ensure libsparseir is downloaded and extracted."""
+    """Ensure libsparseir is downloaded and extracted, and clean untracked files if already present."""
     pkg_dir = os.path.dirname(__file__)
     libsparseir_dir = os.path.join(pkg_dir, 'libsparseir')
-    if not os.path.exists(libsparseir_dir):
+    if os.path.exists(libsparseir_dir):
+        # Try to clean up untracked files if it's a git repo
+        git_dir = os.path.join(libsparseir_dir, '.git')
+        if os.path.exists(git_dir):
+            try:
+                subprocess.check_call(['git', 'clean', '-xdf'], cwd=libsparseir_dir)
+                subprocess.check_call(['git', 'reset', '--hard'], cwd=libsparseir_dir)
+            except Exception as e:
+                print("Warning: git clean/reset failed, removing directory instead.", e)
+                shutil.rmtree(libsparseir_dir)
+                download_and_extract_tag(LIBSPARSEIR_VERSION, pkg_dir)
+                ensure_dependencies()
+                return libsparseir_dir
+        else:
+            # Not a git repo, remove and re-clone
+            shutil.rmtree(libsparseir_dir)
+            download_and_extract_tag(LIBSPARSEIR_VERSION, pkg_dir)
+            ensure_dependencies()
+            return libsparseir_dir
+    else:
         download_and_extract_tag(LIBSPARSEIR_VERSION, pkg_dir)
-        # Download dependencies after cloning libsparseir
         ensure_dependencies()
-        
-        # Copy Makefile.bundle to libsparseir directory
-        #makefile_src = os.path.join(pkg_dir, 'Makefile.bundle')
-        #makefile_dst = os.path.join(libsparseir_dir, 'Makefile.bundle')
-        #if os.path.exists(makefile_src):
-            #shutil.copy2(makefile_src, makefile_dst)
-        #else:
-            #raise RuntimeError("Makefile.bundle not found in package root")
-            
     return libsparseir_dir
 
 
@@ -145,6 +155,9 @@ class BuildCommand(build_py):
     def run(self):
         # Download and extract libsparseir and dependencies
         libsparseir_dir = ensure_libsparseir()
+        deps_dir = os.path.join(libsparseir_dir, 'deps')
+        if not os.path.exists(deps_dir):
+            ensure_dependencies()
         
         # Copy Makefile.bundle to libsparseir directory
         pkg_dir = os.path.dirname(__file__)
@@ -191,6 +204,11 @@ class BuildExtCommand(build_ext):
     def run(self):
         # Download and extract libsparseir and dependencies
         libsparseir_dir = ensure_libsparseir()
+        
+        # Ensure dependencies are downloaded
+        deps_dir = os.path.join(libsparseir_dir, 'deps')
+        if not os.path.exists(deps_dir):
+            ensure_dependencies()
         
         # Copy Makefile.bundle to libsparseir directory
         pkg_dir = os.path.dirname(__file__)
@@ -259,9 +277,7 @@ setup(
     ],
     ext_modules=[sparseir_capi],
     cmdclass=dict(
-        build_py=BuildCommand,
         sdist=SDistCommand,
-        build_ext=BuildExtCommand,
     ),
     package_data={
         'sparseir': [
