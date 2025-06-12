@@ -1,11 +1,3 @@
 include README.md
-include LICENSE
-include setup.cfg
-
-recursive-include libsparseir/deps *
-recursive-include libsparseir/include *
-recursive-include libsparseir/src *
-include libsparseir/Makefile.bundle
-include libsparseir/build_capi.sh
-
-recursive-include lib *.so *.dylib *.dll 
+recursive-include pylibsparseir *.so *.dll *.dylib
+recursive-include pylibsparseir *.py
