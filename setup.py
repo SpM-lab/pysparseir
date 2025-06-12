@@ -19,6 +19,14 @@ class CMakeBuild(build_ext):
 
         subprocess.check_call(['cmake', '--build', '.', '--config', 'Release'], cwd=build_dir)
 
+# sdistとwheelで異なるpackage_dataを設定
+if 'bdist_wheel' in sys.argv:
+    package_data = {
+        'pylibsparseir': ['libsparseir*.dylib', 'libsparseir*.so', 'libsparseir*.dll'],
+    }
+else:
+    package_data = {}
+
 setup(
     name='pylibsparseir',
     version='0.1.0',
@@ -26,4 +34,5 @@ setup(
     cmdclass={'build_ext': CMakeBuild},
     ext_modules=[Extension('dummy', sources=[])],  # dummy Extension（build_extを有効にするため）
     zip_safe=False,
+    package_data=package_data,
 )

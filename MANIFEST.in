@@ -1,3 +1,2 @@
 include README.md
-recursive-include pylibsparseir *.so *.dll *.dylib
 recursive-include pylibsparseir *.py
