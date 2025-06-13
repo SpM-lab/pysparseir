@@ -13,7 +13,7 @@ class CMakeBuild(build_ext):
         subprocess.check_call([
             'cmake',
             os.path.abspath('libsparseir'),
-            f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={os.path.abspath("pylibsparseir")}',
+            f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={os.path.abspath("src/pylibsparseir")}',
             f'-DCMAKE_BUILD_TYPE=Release',
         ], cwd=build_dir)
 
@@ -30,7 +30,7 @@ else:
 setup(
     name='pylibsparseir',
     version='0.1.0', 
-    packages=['pylibsparseir'],
+    packages=['src'],
     cmdclass={'build_ext': CMakeBuild},
     ext_modules=[Extension('dummy', sources=[])],  # dummy Extension（build_extを有効にするため）
     zip_safe=False,
