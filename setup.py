@@ -28,8 +28,6 @@ else:
     package_data = {}
 
 setup(
-    name='pysparseir',
-    version='0.1.0',
     package_dir={'': 'src'},
     packages=['pylibsparseir'],
     cmdclass={'build_ext': CMakeBuild},

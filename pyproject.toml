@@ -1,10 +1,28 @@
 [project]
 name = "pysparseir"
 version = "0.1.0"
-description = "Add your description here"
+description = "Python bindings for the libsparseir library, providing efficient sparse intermediate representation for many-body physics calculations"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = ["numpy"]
+authors = [
+    {name = "SpM-lab"}
+]
+license = {text = "MIT"}
+keywords = ["physics", "many-body", "green-functions", "sparse-ir"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+[project.urls]
+Homepage = "https://github.com/SpM-lab/pysparseir"
+Repository = "https://github.com/SpM-lab/pysparseir"
+"Bug Tracker" = "https://github.com/SpM-lab/pysparseir/issues"
 
 [build-system]
 requires = ["setuptools", "wheel", "cibuildwheel"]
