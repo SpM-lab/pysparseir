@@ -1,3 +1,11 @@
+[project]
+name = "pysparseir"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
 [build-system]
 requires = ["setuptools", "wheel", "cibuildwheel"]
 build-backend = "setuptools.build_meta"
