@@ -8,7 +8,7 @@ import ctypes
 from ctypes import *
 import numpy as np
 
-from .types import *
+from .ctypes_wrapper import *
 from .constants import *
 
 def _find_library():
@@ -42,10 +42,6 @@ except Exception as e:
 
 # Set up function prototypes
 def _setup_prototypes():
-    # Version function
-    _lib.spir_get_version.argtypes = [POINTER(c_int), POINTER(c_int), POINTER(c_int)]
-    _lib.spir_get_version.restype = c_int
-
     # Kernel functions
     _lib.spir_logistic_kernel_new.argtypes = [c_double, POINTER(c_int)]
     _lib.spir_logistic_kernel_new.restype = spir_kernel
@@ -86,22 +82,6 @@ def _setup_prototypes():
 
 _setup_prototypes()
 
-def get_version():
-    """Get the version information of the SparseIR library.
-    
-    Returns:
-        tuple: A tuple of (major, minor, patch) version numbers.
-    """
-    major = c_int()
-    minor = c_int()
-    patch = c_int()
-    
-    status = _lib.spir_get_version(byref(major), byref(minor), byref(patch))
-    if status != COMPUTATION_SUCCESS:
-        raise RuntimeError(f"Failed to get version information: {status}")
-    
-    return major.value, minor.value, patch.value
-
 # Python wrapper functions
 def logistic_kernel_new(lambda_val):
     """Create a new logistic kernel."""
@@ -125,13 +105,13 @@ def kernel_domain(kernel):
     xmax = c_double()
     ymin = c_double()
     ymax = c_double()
-    
+
     status = _lib.spir_kernel_domain(
         kernel, byref(xmin), byref(xmax), byref(ymin), byref(ymax)
     )
     if status != COMPUTATION_SUCCESS:
         raise RuntimeError(f"Failed to get kernel domain: {status}")
-    
+
     return xmin.value, xmax.value, ymin.value, ymax.value
 
 def sve_result_new(kernel, epsilon):
@@ -192,4 +172,4 @@ def basis_get_stats(basis):
     status = _lib.spir_basis_get_stats(basis, byref(stats))
     if status != COMPUTATION_SUCCESS:
         raise RuntimeError(f"Failed to get basis statistics: {status}")
-    return stats.value 
+    return stats.value

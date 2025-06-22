@@ -28,9 +28,10 @@ else:
     package_data = {}
 
 setup(
-    name='pylibsparseir',
-    version='0.1.0', 
-    packages=['src'],
+    name='pysparseir',
+    version='0.1.0',
+    package_dir={'': 'src'},
+    packages=['pylibsparseir'],
     cmdclass={'build_ext': CMakeBuild},
     ext_modules=[Extension('dummy', sources=[])],  # dummy Extension（build_extを有効にするため）
     zip_safe=False,
