@@ -27,3 +27,8 @@ Repository = "https://github.com/SpM-lab/pysparseir"
 [build-system]
 requires = ["setuptools", "wheel", "cibuildwheel"]
 build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+]
