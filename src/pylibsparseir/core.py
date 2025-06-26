@@ -8,6 +8,9 @@ import ctypes
 from ctypes import *
 import numpy as np
 
+# Define c_bool for compatibility
+c_bool = c_byte
+
 from .ctypes_wrapper import *
 from .constants import *
 
@@ -117,17 +120,17 @@ def _setup_prototypes():
     _lib.spir_basis_get_default_ws.argtypes = [spir_basis, POINTER(c_double)]
     _lib.spir_basis_get_default_ws.restype = c_int
     
-    _lib.spir_basis_get_n_default_matsus.argtypes = [spir_basis, c_int, POINTER(c_int)]
+    _lib.spir_basis_get_n_default_matsus.argtypes = [spir_basis, c_bool, POINTER(c_int)]
     _lib.spir_basis_get_n_default_matsus.restype = c_int
     
-    _lib.spir_basis_get_default_matsus.argtypes = [spir_basis, c_int, POINTER(c_int64)]
+    _lib.spir_basis_get_default_matsus.argtypes = [spir_basis, c_bool, POINTER(c_int64)]
     _lib.spir_basis_get_default_matsus.restype = c_int
 
     # Sampling objects
     _lib.spir_tau_sampling_new.argtypes = [spir_basis, c_int, POINTER(c_double), POINTER(c_int)]
     _lib.spir_tau_sampling_new.restype = spir_sampling
     
-    _lib.spir_matsu_sampling_new.argtypes = [spir_basis, c_int, c_int, POINTER(c_int64), POINTER(c_int)]
+    _lib.spir_matsu_sampling_new.argtypes = [spir_basis, c_bool, c_int, POINTER(c_int64), POINTER(c_int)]
     _lib.spir_matsu_sampling_new.restype = spir_sampling
     
     # Sampling operations
@@ -142,6 +145,79 @@ def _setup_prototypes():
         POINTER(c_double), POINTER(c_double)
     ]
     _lib.spir_sampling_fit_dd.restype = c_int
+
+    # Additional sampling functions
+    _lib.spir_sampling_get_npoints.argtypes = [spir_sampling, POINTER(c_int)]
+    _lib.spir_sampling_get_npoints.restype = c_int
+    
+    _lib.spir_sampling_get_taus.argtypes = [spir_sampling, POINTER(c_double)]
+    _lib.spir_sampling_get_taus.restype = c_int
+    
+    _lib.spir_sampling_get_matsus.argtypes = [spir_sampling, POINTER(c_int64)]
+    _lib.spir_sampling_get_matsus.restype = c_int
+    
+    _lib.spir_sampling_get_cond_num.argtypes = [spir_sampling, POINTER(c_double)]
+    _lib.spir_sampling_get_cond_num.restype = c_int
+    
+    # Multi-dimensional sampling evaluation functions
+    _lib.spir_sampling_eval_dz.argtypes = [
+        spir_sampling, c_int, c_int, POINTER(c_int), c_int,
+        POINTER(c_double), POINTER(c_double)
+    ]
+    _lib.spir_sampling_eval_dz.restype = c_int
+    
+    _lib.spir_sampling_eval_zz.argtypes = [
+        spir_sampling, c_int, c_int, POINTER(c_int), c_int,
+        POINTER(c_double), POINTER(c_double)
+    ]
+    _lib.spir_sampling_eval_zz.restype = c_int
+    
+    _lib.spir_sampling_fit_zz.argtypes = [
+        spir_sampling, c_int, c_int, POINTER(c_int), c_int,
+        POINTER(c_double), POINTER(c_double)
+    ]
+    _lib.spir_sampling_fit_zz.restype = c_int
+
+    # DLR functions
+    _lib.spir_dlr_new.argtypes = [spir_basis, POINTER(c_int)]
+    _lib.spir_dlr_new.restype = spir_basis
+    
+    _lib.spir_dlr_new_with_poles.argtypes = [spir_basis, c_int, POINTER(c_double), POINTER(c_int)]
+    _lib.spir_dlr_new_with_poles.restype = spir_basis
+    
+    _lib.spir_dlr_get_npoles.argtypes = [spir_basis, POINTER(c_int)]
+    _lib.spir_dlr_get_npoles.restype = c_int
+    
+    _lib.spir_dlr_get_poles.argtypes = [spir_basis, POINTER(c_double)]
+    _lib.spir_dlr_get_poles.restype = c_int
+    
+    _lib.spir_dlr2ir_dd.argtypes = [
+        spir_basis, c_int, c_int, POINTER(c_int), c_int,
+        POINTER(c_double), POINTER(c_double)
+    ]
+    _lib.spir_dlr2ir_dd.restype = c_int
+    
+    _lib.spir_dlr2ir_zz.argtypes = [
+        spir_basis, c_int, c_int, POINTER(c_int), c_int,
+        POINTER(c_double), POINTER(c_double)
+    ]
+    _lib.spir_dlr2ir_zz.restype = c_int
+
+    # Release functions
+    _lib.spir_kernel_release.argtypes = [spir_kernel]
+    _lib.spir_kernel_release.restype = None
+    
+    _lib.spir_sve_result_release.argtypes = [spir_sve_result]
+    _lib.spir_sve_result_release.restype = None
+    
+    _lib.spir_basis_release.argtypes = [spir_basis]
+    _lib.spir_basis_release.restype = None
+    
+    _lib.spir_funcs_release.argtypes = [spir_funcs]
+    _lib.spir_funcs_release.restype = None
+    
+    _lib.spir_sampling_release.argtypes = [spir_sampling]
+    _lib.spir_sampling_release.restype = None
 
 _setup_prototypes()
 
@@ -357,13 +433,13 @@ def basis_get_default_matsubara_sampling_points(basis, positive_only=False):
     """Get default Matsubara sampling points for a basis."""
     # Get number of points
     n_points = c_int()
-    status = _lib.spir_basis_get_n_default_matsus(basis, int(positive_only), byref(n_points))
+    status = _lib.spir_basis_get_n_default_matsus(basis, c_bool(positive_only), byref(n_points))
     if status != COMPUTATION_SUCCESS:
         raise RuntimeError(f"Failed to get number of default Matsubara points: {status}")
     
     # Get the points
     points = np.zeros(n_points.value, dtype=np.int64)
-    status = _lib.spir_basis_get_default_matsus(basis, int(positive_only), points.ctypes.data_as(POINTER(c_int64)))
+    status = _lib.spir_basis_get_default_matsus(basis, c_bool(positive_only), points.ctypes.data_as(POINTER(c_int64)))
     if status != COMPUTATION_SUCCESS:
         raise RuntimeError(f"Failed to get default Matsubara points: {status}")
     
@@ -398,7 +474,7 @@ def matsubara_sampling_new(basis, positive_only=False, sampling_points=None):
     
     status = c_int()
     sampling = _lib.spir_matsu_sampling_new(
-        basis, int(positive_only), n_points,
+        basis, c_bool(positive_only), n_points,
         sampling_points.ctypes.data_as(POINTER(c_int64)),
         byref(status)
     )
