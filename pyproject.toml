@@ -35,3 +35,9 @@ build-backend = "setuptools.build_meta"
 dev = [
     "pytest>=8.4.1",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_tests.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

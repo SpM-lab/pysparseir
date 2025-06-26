@@ -422,5 +422,289 @@ class TestIntegrationErrorHandling:
         _lib.spir_basis_release(ir_basis)
 
 
+class TestEnhancedDLRSamplingIntegration:
+    """Enhanced DLR sampling integration tests matching LibSparseIR.jl coverage"""
+    
+    def _compare_tensors_with_relative_error(self, tensor1, tensor2, tol):
+        """Compare tensors with relative error tolerance"""
+        tensor1_flat = tensor1.flatten()
+        tensor2_flat = tensor2.flatten()
+        
+        max_ref = np.max(np.abs(tensor1_flat))
+        if max_ref == 0:
+            max_diff = np.max(np.abs(tensor2_flat))
+            return max_diff <= tol
+        
+        max_diff = np.max(np.abs(tensor1_flat - tensor2_flat))
+        return max_diff <= tol * max_ref
+    
+    def _evaluate_basis_functions(self, u, x_values):
+        """Evaluate basis functions at given points"""
+        # Get function size
+        size = c_int()
+        status = _lib.spir_funcs_get_size(u, byref(size))
+        assert status == COMPUTATION_SUCCESS
+        funcs_size = size.value
+        
+        # Evaluate at each point
+        u_eval_mat = np.zeros((len(x_values), funcs_size), dtype=np.float64)
+        for i, x in enumerate(x_values):
+            u_eval = np.zeros(funcs_size, dtype=np.float64)
+            status = _lib.spir_funcs_eval(u, c_double(x), u_eval.ctypes.data_as(POINTER(c_double)))
+            assert status == COMPUTATION_SUCCESS
+            u_eval_mat[i, :] = u_eval
+        
+        return u_eval_mat
+    
+    def _evaluate_matsubara_basis_functions(self, uhat, matsubara_indices):
+        """Evaluate Matsubara basis functions"""
+        # Get function size
+        size = c_int()
+        status = _lib.spir_funcs_get_size(uhat, byref(size))
+        assert status == COMPUTATION_SUCCESS
+        funcs_size = size.value
+        
+        # Prepare output array in column-major order
+        uhat_eval_mat = np.zeros((len(matsubara_indices), funcs_size), dtype=np.complex128)
+        freq_indices = np.array(matsubara_indices, dtype=np.int64)
+        
+        # Use C API directly with complex array (like Julia version)
+        status = _lib.spir_funcs_batch_eval_matsu(
+            uhat, ORDER_COLUMN_MAJOR, len(matsubara_indices),
+            freq_indices.ctypes.data_as(POINTER(c_int64)),
+            uhat_eval_mat.ctypes.data_as(POINTER(c_double))
+        )
+        assert status == COMPUTATION_SUCCESS
+        
+        return uhat_eval_mat
+    
+    def _transform_coefficients(self, coeffs, basis_eval, target_dim=0):
+        """Transform coefficients using basis evaluation matrix (like Julia _transform_coefficients)"""
+        # For 1D case (target_dim=0), this is just a matrix multiplication
+        if coeffs.ndim == 1:
+            if np.iscomplexobj(basis_eval):
+                coeffs_complex = coeffs.astype(np.complex128)
+            else:
+                coeffs_complex = coeffs
+            return np.dot(basis_eval, coeffs_complex)
+        else:
+            # For multi-dimensional case, would need more complex logic
+            # For now, just handle 1D case which is what we're testing
+            raise NotImplementedError("Multi-dimensional coefficient transformation not implemented")
+
+    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("positive_only", [True, False])
+    def test_complete_dlr_sampling_workflow(self, statistics, positive_only):
+        """Test complete DLR sampling workflow with comprehensive integration"""
+        beta = 1000.0  # Use larger beta like Julia version
+        wmax = 2.0     # Use wmax like Julia version
+        epsilon = 1e-10
+        tol = 10 * epsilon  # Use larger tolerance like Julia version
+        
+        # Create IR basis
+        ir_basis = _spir_basis_new(statistics, beta, wmax, epsilon)
+        assert ir_basis is not None
+        
+        # Get IR basis size
+        ir_size = c_int()
+        status = _lib.spir_basis_get_size(ir_basis, byref(ir_size))
+        assert status == COMPUTATION_SUCCESS
+        
+        # Create DLR
+        dlr_status = c_int()
+        dlr = _lib.spir_dlr_new(ir_basis, byref(dlr_status))
+        assert dlr_status.value == COMPUTATION_SUCCESS
+        assert dlr is not None
+        
+        # Get DLR properties
+        n_poles = c_int()
+        status = _lib.spir_dlr_get_npoles(dlr, byref(n_poles))
+        assert status == COMPUTATION_SUCCESS
+        assert n_poles.value >= ir_size.value
+        
+        poles = np.zeros(n_poles.value, dtype=np.float64)
+        status = _lib.spir_dlr_get_poles(dlr, poles.ctypes.data_as(POINTER(c_double)))
+        assert status == COMPUTATION_SUCCESS
+        
+        # Get default tau points
+        n_tau_points = c_int()
+        status = _lib.spir_basis_get_n_default_taus(ir_basis, byref(n_tau_points))
+        assert status == COMPUTATION_SUCCESS
+        
+        tau_points = np.zeros(n_tau_points.value, dtype=np.float64)
+        status = _lib.spir_basis_get_default_taus(ir_basis, 
+                                                 tau_points.ctypes.data_as(POINTER(c_double)))
+        assert status == COMPUTATION_SUCCESS
+        
+        # Create DLR tau sampling (this is what was missing from Python!)
+        dlr_tau_sampling_status = c_int()
+        dlr_tau_sampling = _lib.spir_tau_sampling_new(
+            dlr, n_tau_points.value,
+            tau_points.ctypes.data_as(POINTER(c_double)),
+            byref(dlr_tau_sampling_status)
+        )
+        assert dlr_tau_sampling_status.value == COMPUTATION_SUCCESS
+        assert dlr_tau_sampling is not None
+        
+        # Get DLR basis functions
+        dlr_u_status = c_int()
+        dlr_u = _lib.spir_basis_get_u(dlr, byref(dlr_u_status))
+        assert dlr_u_status.value == COMPUTATION_SUCCESS
+        assert dlr_u is not None
+        
+        dlr_uhat_status = c_int()
+        dlr_uhat = _lib.spir_basis_get_uhat(dlr, byref(dlr_uhat_status))
+        assert dlr_uhat_status.value == COMPUTATION_SUCCESS
+        assert dlr_uhat is not None
+        
+        # Get IR basis functions
+        ir_u_status = c_int()
+        ir_u = _lib.spir_basis_get_u(ir_basis, byref(ir_u_status))
+        assert ir_u_status.value == COMPUTATION_SUCCESS
+        assert ir_u is not None
+        
+        ir_uhat_status = c_int()
+        ir_uhat = _lib.spir_basis_get_uhat(ir_basis, byref(ir_uhat_status))
+        assert ir_uhat_status.value == COMPUTATION_SUCCESS
+        assert ir_uhat is not None
+        
+        # Get default Matsubara points
+        n_matsu_points = c_int()
+        status = _lib.spir_basis_get_n_default_matsus(ir_basis, c_bool(positive_only), byref(n_matsu_points))
+        assert status == COMPUTATION_SUCCESS
+        
+        matsu_points = np.zeros(n_matsu_points.value, dtype=np.int64)
+        status = _lib.spir_basis_get_default_matsus(ir_basis, c_bool(positive_only),
+                                                   matsu_points.ctypes.data_as(POINTER(c_int64)))
+        assert status == COMPUTATION_SUCCESS
+        
+        # Create DLR Matsubara sampling
+        dlr_matsu_sampling_status = c_int()
+        dlr_matsu_sampling = _lib.spir_matsu_sampling_new(
+            dlr, c_bool(positive_only), n_matsu_points.value,
+            matsu_points.ctypes.data_as(POINTER(c_int64)),
+            byref(dlr_matsu_sampling_status)
+        )
+        assert dlr_matsu_sampling_status.value == COMPUTATION_SUCCESS
+        assert dlr_matsu_sampling is not None
+        
+        # Test DLR coefficient generation and conversion
+        if n_poles.value > 0:
+            # Generate random DLR coefficients
+            np.random.seed(982743)  # Same seed as Julia/C++ version
+            dlr_coeffs = np.random.randn(n_poles.value).astype(np.float64) * 0.1
+            
+            # Convert DLR to IR
+            ir_coeffs = np.zeros(ir_size.value, dtype=np.float64)
+            status = _lib.spir_dlr2ir_dd(
+                dlr, ORDER_COLUMN_MAJOR, 1,
+                np.array([n_poles.value], dtype=np.int32).ctypes.data_as(POINTER(c_int)),
+                0,
+                dlr_coeffs.ctypes.data_as(POINTER(c_double)),
+                ir_coeffs.ctypes.data_as(POINTER(c_double))
+            )
+            assert status == COMPUTATION_SUCCESS
+            
+            # Evaluate Green's function at tau points using DLR basis functions
+            dlr_u_eval_mat = self._evaluate_basis_functions(dlr_u, tau_points)
+            gtau_from_dlr = self._transform_coefficients(dlr_coeffs, dlr_u_eval_mat, 0)
+            
+            # Evaluate Green's function at tau points using IR basis functions
+            ir_u_eval_mat = self._evaluate_basis_functions(ir_u, tau_points)
+            gtau_from_ir = self._transform_coefficients(ir_coeffs, ir_u_eval_mat, 0)
+            
+            # Compare Green's functions - they should be very similar
+            assert self._compare_tensors_with_relative_error(gtau_from_ir, gtau_from_dlr, tol)
+            
+            # Test using C API sampling evaluation
+            gtau_from_dlr_sampling = np.zeros(n_tau_points.value, dtype=np.float64)
+            status = _lib.spir_sampling_eval_dd(
+                dlr_tau_sampling, ORDER_COLUMN_MAJOR, 1,
+                np.array([n_poles.value], dtype=np.int32).ctypes.data_as(POINTER(c_int)),
+                0,
+                dlr_coeffs.ctypes.data_as(POINTER(c_double)),
+                gtau_from_dlr_sampling.ctypes.data_as(POINTER(c_double))
+            )
+            assert status == COMPUTATION_SUCCESS
+            
+            # Compare sampling-based evaluation with direct evaluation
+            assert self._compare_tensors_with_relative_error(gtau_from_dlr, gtau_from_dlr_sampling, tol)
+            
+            # Test that we can evaluate Matsubara frequency functions (basic functionality test)
+            if n_matsu_points.value > 0:
+                # Just verify that the evaluation works without NaN/Inf values
+                dlr_uhat_eval_mat = self._evaluate_matsubara_basis_functions(dlr_uhat, matsu_points)
+                assert np.all(np.isfinite(dlr_uhat_eval_mat))
+                
+                ir_uhat_eval_mat = self._evaluate_matsubara_basis_functions(ir_uhat, matsu_points)
+                assert np.all(np.isfinite(ir_uhat_eval_mat))
+                
+                # Verify that both evaluations produce reasonable complex values
+                assert dlr_uhat_eval_mat.shape == (n_matsu_points.value, n_poles.value)
+                assert ir_uhat_eval_mat.shape == (n_matsu_points.value, ir_size.value)
+        
+        # Cleanup
+        _lib.spir_funcs_release(dlr_u)
+        _lib.spir_funcs_release(dlr_uhat)
+        _lib.spir_funcs_release(ir_u)
+        _lib.spir_funcs_release(ir_uhat)
+        _lib.spir_sampling_release(dlr_tau_sampling)
+        _lib.spir_sampling_release(dlr_matsu_sampling)
+        _lib.spir_basis_release(dlr)
+        _lib.spir_basis_release(ir_basis)
+
+    def test_dlr_sampling_tensor_operations(self):
+        """Test DLR sampling with multi-dimensional tensor operations"""
+        statistics = STATISTICS_FERMIONIC
+        beta = 5.0
+        wmax = 2.0
+        epsilon = 1e-8
+        
+        # Create IR basis and DLR
+        ir_basis = _spir_basis_new(statistics, beta, wmax, epsilon)
+        assert ir_basis is not None
+        
+        dlr_status = c_int()
+        dlr = _lib.spir_dlr_new(ir_basis, byref(dlr_status))
+        assert dlr_status.value == COMPUTATION_SUCCESS
+        
+        # Get dimensions
+        n_poles = c_int()
+        status = _lib.spir_dlr_get_npoles(dlr, byref(n_poles))
+        assert status == COMPUTATION_SUCCESS
+        
+        ir_size = c_int()
+        status = _lib.spir_basis_get_size(ir_basis, byref(ir_size))
+        assert status == COMPUTATION_SUCCESS
+        
+        if n_poles.value > 0 and ir_size.value > 0:
+            # Test 2D tensor operations
+            d1 = 3
+            dims_dlr = [n_poles.value, d1]
+            dims_ir = [ir_size.value, d1]
+            
+            # Generate random 2D DLR coefficients
+            np.random.seed(42)
+            dlr_coeffs_2d = np.random.randn(n_poles.value * d1).astype(np.float64) * 0.1
+            
+            # Convert DLR to IR for 2D case
+            ir_coeffs_2d = np.zeros(ir_size.value * d1, dtype=np.float64)
+            status = _lib.spir_dlr2ir_dd(
+                dlr, ORDER_COLUMN_MAJOR, 2,
+                np.array(dims_dlr, dtype=np.int32).ctypes.data_as(POINTER(c_int)),
+                0,
+                dlr_coeffs_2d.ctypes.data_as(POINTER(c_double)),
+                ir_coeffs_2d.ctypes.data_as(POINTER(c_double))
+            )
+            assert status == COMPUTATION_SUCCESS
+            
+            # Verify we got reasonable results
+            assert np.any(np.abs(ir_coeffs_2d) > 1e-15)
+        
+        # Cleanup
+        _lib.spir_basis_release(dlr)
+        _lib.spir_basis_release(ir_basis)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
