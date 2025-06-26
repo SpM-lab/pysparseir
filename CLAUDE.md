@@ -94,6 +94,12 @@ def function_name(args):
 - **tests/test_basis.py**: Tests for `FiniteTempBasis` class and basis function evaluation
 - **tests/test_sampling.py**: Tests for `TauSampling` and `MatsubaraSampling` classes
 - **tests/test_core.py**: Tests for low-level C API wrapper functions
+- **tests/c_api/**: Comprehensive C API interface tests (corresponding to LibSparseIR.jl/test/C_API/)
+  - **core_tests.py**: Core C API functionality tests (kernels, SVE, basis functions)
+  - **sampling_tests.py**: C API sampling functionality tests (tau/Matsubara sampling)
+  - **dlr_tests.py**: C API DLR (Discrete Lehmann Representation) tests
+  - **integration_tests.py**: C API integration workflow tests
+  - **comprehensive_tests.py**: Comprehensive C API validation tests
 - **test_compare.py**: Comparison test with sparse-ir reference implementation
 
 Key test patterns:

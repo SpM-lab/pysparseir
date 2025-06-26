@@ -257,3 +257,212 @@ class TestCAPICoreFixed:
         
         # Test should complete without segfault
         assert True
+
+
+class TestBasisFunctionEvaluation:
+    """Comprehensive basis function evaluation tests matching LibSparseIR.jl coverage"""
+    
+    def _spir_basis_new(self, statistics, beta, wmax, epsilon):
+        """Helper function equivalent to C++ _spir_basis_new"""
+        status = c_int()
+        
+        # Create logistic kernel
+        kernel = _lib.spir_logistic_kernel_new(c_double(beta * wmax), byref(status))
+        if status.value != COMPUTATION_SUCCESS or kernel is None:
+            return None, status.value
+        
+        # Create SVE result
+        sve = _lib.spir_sve_result_new(kernel, c_double(epsilon), byref(status))
+        if status.value != COMPUTATION_SUCCESS or sve is None:
+            _lib.spir_kernel_release(kernel)
+            return None, status.value
+        
+        # Create basis
+        basis = _lib.spir_basis_new(c_int(statistics), c_double(beta), c_double(wmax), 
+                                   kernel, sve, byref(status))
+        if status.value != COMPUTATION_SUCCESS or basis is None:
+            _lib.spir_sve_result_release(sve)
+            _lib.spir_kernel_release(kernel)
+            return None, status.value
+        
+        # Clean up intermediate objects (like C++ version)
+        _lib.spir_sve_result_release(sve)
+        _lib.spir_kernel_release(kernel)
+        
+        return basis, COMPUTATION_SUCCESS
+
+    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    def test_basis_functions_comprehensive(self, statistics):
+        """Test comprehensive basis function evaluation matching Julia tests"""
+        beta = 2.0
+        wmax = 5.0
+        epsilon = 1e-6
+        
+        # Create basis using helper function (equivalent to C++ _spir_basis_new)
+        basis, basis_status = self._spir_basis_new(statistics, beta, wmax, epsilon)
+        assert basis_status == COMPUTATION_SUCCESS
+        assert basis is not None
+        
+        # Get basis size
+        basis_size = c_int()
+        size_status = _lib.spir_basis_get_size(basis, byref(basis_size))
+        assert size_status == COMPUTATION_SUCCESS
+        size = basis_size.value
+        
+        # Get u basis functions
+        u_status = c_int()
+        u = _lib.spir_basis_get_u(basis, byref(u_status))
+        assert u_status.value == COMPUTATION_SUCCESS
+        assert u is not None
+        
+        # Get uhat basis functions  
+        uhat_status = c_int()
+        uhat = _lib.spir_basis_get_uhat(basis, byref(uhat_status))
+        assert uhat_status.value == COMPUTATION_SUCCESS
+        assert uhat is not None
+        
+        # Get v basis functions
+        v_status = c_int()
+        v = _lib.spir_basis_get_v(basis, byref(v_status))
+        assert v_status.value == COMPUTATION_SUCCESS
+        assert v is not None
+        
+        # Test single point evaluation for u basis
+        x = 0.5  # Test point for u basis (imaginary time)
+        out = np.zeros(size, dtype=np.float64)
+        eval_status = _lib.spir_funcs_eval(u, c_double(x), out.ctypes.data_as(POINTER(c_double)))
+        assert eval_status == COMPUTATION_SUCCESS
+        
+        # Check that we got reasonable values
+        assert np.all(np.isfinite(out))
+        
+        # Test single point evaluation for v basis
+        y = 0.5 * wmax  # Test point for v basis (real frequency)
+        eval_status = _lib.spir_funcs_eval(v, c_double(y), out.ctypes.data_as(POINTER(c_double)))
+        assert eval_status == COMPUTATION_SUCCESS
+        assert np.all(np.isfinite(out))
+        
+        # Test batch evaluation
+        num_points = 5
+        xs = np.array([0.2 * (i+1) for i in range(num_points)], dtype=np.float64)  # Points at 0.2, 0.4, 0.6, 0.8, 1.0
+        batch_out = np.zeros(num_points * size, dtype=np.float64)
+        
+        # Test row-major order for u basis
+        batch_status = _lib.spir_funcs_batch_eval(
+            u, ORDER_ROW_MAJOR, num_points, 
+            xs.ctypes.data_as(POINTER(c_double)),
+            batch_out.ctypes.data_as(POINTER(c_double))
+        )
+        assert batch_status == COMPUTATION_SUCCESS
+        assert np.all(np.isfinite(batch_out))
+        
+        # Test column-major order for u basis
+        batch_status = _lib.spir_funcs_batch_eval(
+            u, ORDER_COLUMN_MAJOR, num_points,
+            xs.ctypes.data_as(POINTER(c_double)),
+            batch_out.ctypes.data_as(POINTER(c_double))
+        )
+        assert batch_status == COMPUTATION_SUCCESS
+        assert np.all(np.isfinite(batch_out))
+        
+        # Test row-major order for v basis
+        batch_status = _lib.spir_funcs_batch_eval(
+            v, ORDER_ROW_MAJOR, num_points,
+            xs.ctypes.data_as(POINTER(c_double)),
+            batch_out.ctypes.data_as(POINTER(c_double))
+        )
+        assert batch_status == COMPUTATION_SUCCESS
+        assert np.all(np.isfinite(batch_out))
+        
+        # Test column-major order for v basis
+        batch_status = _lib.spir_funcs_batch_eval(
+            v, ORDER_COLUMN_MAJOR, num_points,
+            xs.ctypes.data_as(POINTER(c_double)),
+            batch_out.ctypes.data_as(POINTER(c_double))
+        )
+        assert batch_status == COMPUTATION_SUCCESS
+        assert np.all(np.isfinite(batch_out))
+        
+        # Test error cases (corresponds to C++ error case testing)
+        # Test with null function pointer
+        eval_status = _lib.spir_funcs_eval(None, c_double(x), out.ctypes.data_as(POINTER(c_double)))
+        assert eval_status != COMPUTATION_SUCCESS
+        
+        # Test batch evaluation error cases
+        batch_status = _lib.spir_funcs_batch_eval(
+            None, ORDER_ROW_MAJOR, num_points,
+            xs.ctypes.data_as(POINTER(c_double)),
+            batch_out.ctypes.data_as(POINTER(c_double))
+        )
+        assert batch_status != COMPUTATION_SUCCESS
+        
+        # Clean up
+        _lib.spir_funcs_release(u)
+        _lib.spir_funcs_release(v)
+        _lib.spir_funcs_release(uhat)
+        _lib.spir_basis_release(basis)
+
+    def test_basis_statistics_verification(self):
+        """Test basis statistics retrieval for both fermionic and bosonic cases"""
+        for stats_val, expected in [(STATISTICS_FERMIONIC, STATISTICS_FERMIONIC), 
+                                   (STATISTICS_BOSONIC, STATISTICS_BOSONIC)]:
+            beta = 2.0
+            wmax = 1.0
+            epsilon = 1e-6
+            
+            basis, basis_status = self._spir_basis_new(stats_val, beta, wmax, epsilon)
+            assert basis_status == COMPUTATION_SUCCESS
+            assert basis is not None
+            
+            # Check statistics
+            stats = c_int()
+            stats_status = _lib.spir_basis_get_stats(basis, byref(stats))
+            assert stats_status == COMPUTATION_SUCCESS
+            assert stats.value == expected
+            
+            _lib.spir_basis_release(basis)
+
+    def test_basis_constructor_with_sve_patterns(self):
+        """Test different basis constructor patterns with explicit SVE"""
+        for statistics in [STATISTICS_FERMIONIC, STATISTICS_BOSONIC]:
+            for use_reg_bose in [False, True]:
+                if use_reg_bose and statistics == STATISTICS_FERMIONIC:
+                    continue  # Skip invalid combination
+                
+                beta = 2.0
+                wmax = 5.0
+                Lambda = 10.0
+                epsilon = 1e-6
+                
+                # Create kernel
+                kernel_status = c_int()
+                if use_reg_bose:
+                    kernel = _lib.spir_reg_bose_kernel_new(c_double(Lambda), byref(kernel_status))
+                else:
+                    kernel = _lib.spir_logistic_kernel_new(c_double(Lambda), byref(kernel_status))
+                assert kernel_status.value == COMPUTATION_SUCCESS
+                assert kernel is not None
+                
+                # Create SVE result
+                sve_status = c_int()
+                sve_result = _lib.spir_sve_result_new(kernel, c_double(epsilon), byref(sve_status))
+                assert sve_status.value == COMPUTATION_SUCCESS
+                assert sve_result is not None
+                
+                # Create basis with SVE
+                basis_status = c_int()
+                basis = _lib.spir_basis_new(c_int(statistics), c_double(beta), c_double(wmax), 
+                                          kernel, sve_result, byref(basis_status))
+                assert basis_status.value == COMPUTATION_SUCCESS
+                assert basis is not None
+                
+                # Check statistics
+                stats = c_int()
+                stats_status = _lib.spir_basis_get_stats(basis, byref(stats))
+                assert stats_status == COMPUTATION_SUCCESS
+                assert stats.value == statistics
+                
+                # Clean up
+                _lib.spir_kernel_release(kernel)
+                _lib.spir_sve_result_release(sve_result)
+                _lib.spir_basis_release(basis)
