@@ -148,6 +148,11 @@ class FiniteTempBasis(AbstractBasis):
         """Overall accuracy bound."""
         return self.s[-1] / self.s[0]
     
+    @property
+    def shape(self):
+        """Shape of the basis function set"""
+        return self.s.shape
+    
     def default_tau_sampling_points(self, npoints=None):
         """Get default tau sampling points."""
         return basis_get_default_tau_sampling_points(self._basis)
@@ -188,6 +193,40 @@ class FiniteTempBasis(AbstractBasis):
         """
         # TODO: Implement basis truncation when C API supports it
         raise NotImplementedError("Basis truncation not yet implemented in C API")
+    
+    @property
+    def kernel(self):
+        """The kernel used to generate the basis."""
+        return self._kernel
+    
+    @property 
+    def sve_result(self):
+        """The singular value expansion result."""
+        return self._sve
+    
+    def rescale(self, new_lambda):
+        """Return a basis for different lambda while keeping the same eps.
+        
+        Parameters
+        ----------
+        new_lambda : float
+            The new lambda value (must equal new_beta * new_wmax)
+            
+        Returns
+        -------
+        FiniteTempBasis
+            A new basis with the rescaled parameters
+        """
+        # Calculate new beta and wmax that give the desired lambda
+        # We keep the ratio beta/wmax constant
+        ratio = self.beta / self.wmax
+        new_wmax = np.sqrt(new_lambda / ratio)
+        new_beta = new_lambda / new_wmax
+        
+        # Get epsilon from the current basis accuracy
+        eps = self.accuracy
+        
+        return FiniteTempBasis(self.statistics, new_beta, new_wmax, eps)
 
 
 def finite_temp_bases(beta, wmax, eps=None, **kwargs):
