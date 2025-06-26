@@ -31,6 +31,9 @@ spir_basis = POINTER(_spir_basis)
 spir_sampling = POINTER(_spir_sampling)
 spir_sve_result = POINTER(_spir_sve_result)
 
+# Additional ctypes definitions
+c_int64 = c_longlong
+
 # NumPy dtype mappings
 COMPLEX_DTYPE = np.dtype(np.complex128)
 DOUBLE_DTYPE = np.dtype(np.float64)
