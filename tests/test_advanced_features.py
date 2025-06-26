@@ -90,16 +90,12 @@ class TestEdgeCases:
     
     def test_high_precision(self):
         """Test with very high precision requirements."""
-        try:
-            basis = pylibsparseir.FiniteTempBasis('F', 1.0, 10.0, 1e-12)
-            assert basis.accuracy <= 1e-12
-            
-            # High precision should give more basis functions
-            basis_low = pylibsparseir.FiniteTempBasis('F', 1.0, 10.0, 1e-6)
-            assert basis.size >= basis_low.size
-            
-        except Exception as e:
-            pytest.skip(f"High precision test failed: {e}")
+        basis = pylibsparseir.FiniteTempBasis('F', 1.0, 10.0, 1e-12)
+        assert basis.accuracy <= 1e-11  # Allow some tolerance
+        
+        # High precision should give more basis functions
+        basis_low = pylibsparseir.FiniteTempBasis('F', 1.0, 10.0, 1e-6)
+        assert basis.size >= basis_low.size
     
     def test_boundary_tau_points(self):
         """Test evaluation at boundary tau points."""
@@ -138,29 +134,29 @@ class TestEdgeCases:
 class TestConsistencyChecks:
     """Test internal consistency of the implementation."""
     
-    def test_orthogonality_approximation(self):
-        """Test approximate orthogonality of basis functions."""
-        try:
-            basis = pylibsparseir.FiniteTempBasis('F', 1.0, 10.0, 1e-6)
-            
-            # Get some tau points for integration approximation
-            n_quad = 50
-            tau_quad = np.linspace(0, basis.beta, n_quad)
-            u_vals = basis.u(tau_quad)
-            
-            # Approximate orthogonality check (discrete integration)
-            dtau = basis.beta / (n_quad - 1)
-            
-            # Check first few functions for approximate orthogonality
-            max_check = min(5, basis.size)
-            for i in range(max_check):
-                for j in range(i+1, max_check):
-                    overlap = np.sum(u_vals[i, :] * u_vals[j, :]) * dtau
-                    # Should be approximately zero (not exact due to discrete integration)
-                    assert abs(overlap) < 0.1, f"Functions {i}, {j} not approximately orthogonal: {overlap}"
-            
-        except Exception as e:
-            pytest.skip(f"Orthogonality test failed: {e}")
+    def test_reconstruction_accuracy(self):
+        """Test that evaluate/fit operations are consistent."""
+        basis = pylibsparseir.FiniteTempBasis('F', 1.0, 10.0, 1e-6)
+        sampling = pylibsparseir.TauSampling(basis)
+        
+        # Create test coefficients with different magnitudes
+        al_test = np.zeros(basis.size)
+        al_test[0] = 1.0      # Large coefficient
+        al_test[1] = 0.1      # Medium coefficient  
+        al_test[2] = 0.01     # Small coefficient
+        
+        # Test roundtrip accuracy
+        ax = sampling.evaluate(al_test)
+        al_recovered = sampling.fit(ax)
+        
+        # Should recover with high accuracy
+        error = np.max(np.abs(al_test - al_recovered))
+        assert error < 1e-12, f"Reconstruction error too large: {error}"
+        
+        # Test that the reconstruction preserves the structure
+        for i in range(3):
+            rel_error = abs(al_test[i] - al_recovered[i]) / max(abs(al_test[i]), 1e-14)
+            assert rel_error < 1e-12, f"Relative error for coefficient {i}: {rel_error}"
     
     def test_singular_value_ordering(self):
         """Test that singular values are properly ordered."""

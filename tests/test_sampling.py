@@ -101,12 +101,29 @@ class TestMatsubaraSampling:
     
     def test_creation_default_points(self, basis):
         """Test MatsubaraSampling creation with default points."""
-        pytest.skip("MatsubaraSampling has C API issues - temporarily disabled")
+        # MatsubaraSampling creation works fine
+        sampling = pylibsparseir.MatsubaraSampling(basis)
+        
+        # Check that we have sampling points
+        assert hasattr(sampling, 'wn')
+        assert len(sampling.wn) > 0
+        assert sampling.wn.dtype == np.int64
+        
+        # For fermionic, frequencies should be odd integers
+        assert np.all(sampling.wn % 2 == 1)
         
     def test_creation_custom_points(self, basis):
         """Test MatsubaraSampling creation with custom points."""
-        pytest.skip("MatsubaraSampling has C API issues - temporarily disabled")
+        # Custom points for fermionic frequencies (odd integers)
+        custom_wn = np.array([1, 3, 5, 7, 9], dtype=np.int64)
+        sampling = pylibsparseir.MatsubaraSampling(basis, custom_wn)
+        
+        assert len(sampling.wn) == len(custom_wn)
+        np.testing.assert_array_equal(sampling.wn, custom_wn)
         
     def test_repr(self, basis):
         """Test string representation."""
-        pytest.skip("MatsubaraSampling has C API issues - temporarily disabled")
+        sampling = pylibsparseir.MatsubaraSampling(basis)
+        repr_str = repr(sampling)
+        assert 'MatsubaraSampling' in repr_str
+        assert str(len(sampling.wn)) in repr_str
