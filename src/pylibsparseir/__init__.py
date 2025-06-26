@@ -7,6 +7,7 @@ This package provides Python bindings for the SparseIR C library.
 from .core import *
 from .constants import *
 from .ctypes_wrapper import *
+from .abstract import AbstractBasis
 from .basis import FiniteTempBasis, finite_temp_bases
 from .sampling import TauSampling, MatsubaraSampling
 from .kernel import LogisticKernel, RegularizedBoseKernel

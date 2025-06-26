@@ -7,6 +7,7 @@ from ctypes import *
 from .core import *
 from .constants import *
 from .core import _lib
+from .abstract import AbstractBasis
 
 
 class BasisFunctions:
@@ -33,7 +34,7 @@ class BasisFunctions:
         return funcs_evaluate_matsubara(self._funcs, n).T  # Transpose to match expected shape
 
 
-class FiniteTempBasis:
+class FiniteTempBasis(AbstractBasis):
     """Finite temperature basis for intermediate representation."""
     
     def __init__(self, statistics, beta, wmax, eps=None, **kwargs):
@@ -51,17 +52,17 @@ class FiniteTempBasis:
         eps : float, optional
             Accuracy threshold
         """
-        self.statistics = statistics
-        self.beta = beta
-        self.wmax = wmax
-        self.lambda_ = beta * wmax
+        self._statistics = statistics
+        self._beta = beta
+        self._wmax = wmax
+        self._lambda = beta * wmax
         
         if eps is None:
             eps = 1e-12
         
         # Create kernel
         if statistics == 'F' or statistics == 'B':
-            self._kernel = logistic_kernel_new(self.lambda_)
+            self._kernel = logistic_kernel_new(self._lambda)
         else:
             raise ValueError(f"Invalid statistics: {statistics}")
         
@@ -70,7 +71,7 @@ class FiniteTempBasis:
         
         # Create basis
         stats_int = 1 if statistics == 'F' else 0  # 1=fermion, 0=boson
-        self._basis = basis_new(stats_int, beta, wmax, self._kernel, self._sve)
+        self._basis = basis_new(stats_int, self._beta, self._wmax, self._kernel, self._sve)
         
         # Cache properties
         self._size = None
@@ -78,6 +79,26 @@ class FiniteTempBasis:
         self._u = None
         self._v = None
         self._uhat = None
+    
+    @property
+    def statistics(self):
+        """Quantum statistic ('F' for fermionic, 'B' for bosonic)"""
+        return self._statistics
+    
+    @property
+    def beta(self):
+        """Inverse temperature"""
+        return self._beta
+    
+    @property
+    def wmax(self):
+        """Real frequency cutoff"""
+        return self._wmax
+    
+    @property
+    def lambda_(self):
+        """Basis cutoff parameter, Λ = β * wmax"""
+        return self._lambda
     
     @property
     def size(self):
@@ -131,6 +152,26 @@ class FiniteTempBasis:
         """Get default tau sampling points."""
         return basis_get_default_tau_sampling_points(self._basis)
     
+    def default_omega_sampling_points(self, npoints=None):
+        """
+        Get default omega (real frequency) sampling points.
+        
+        Returns the extrema of the highest-order basis function in real frequency.
+        These points provide near-optimal conditioning for the basis.
+        
+        Parameters
+        ----------
+        npoints : int, optional
+            Ignored (for compatibility with sparse-ir API)
+            
+        Returns
+        -------
+        ndarray
+            Default omega sampling points
+        """
+        from .core import basis_get_default_omega_sampling_points
+        return basis_get_default_omega_sampling_points(self._basis)
+    
     def default_matsubara_sampling_points(self, npoints=None, positive_only=False):
         """Get default Matsubara sampling points."""
         return basis_get_default_matsubara_sampling_points(self._basis, positive_only)
@@ -138,6 +179,15 @@ class FiniteTempBasis:
     def __repr__(self):
         return (f"FiniteTempBasis(statistics='{self.statistics}', "
                 f"beta={self.beta}, wmax={self.wmax}, size={self.size})")
+    
+    def __getitem__(self, index):
+        """Return basis functions/singular values for given index/indices.
+        
+        This can be used to truncate the basis to the n most significant
+        singular values: basis[:3].
+        """
+        # TODO: Implement basis truncation when C API supports it
+        raise NotImplementedError("Basis truncation not yet implemented in C API")
 
 
 def finite_temp_bases(beta, wmax, eps=None, **kwargs):
