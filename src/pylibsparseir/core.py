@@ -4,15 +4,12 @@ Core functionality for the SparseIR Python bindings.
 
 import os
 import sys
-import ctypes
-from ctypes import *
+from ctypes import c_int, c_double, c_int64, c_size_t, c_bool, POINTER, byref
+from ctypes import CDLL
 import numpy as np
 
-# Define c_bool for compatibility
-c_bool = c_byte
-
-from .ctypes_wrapper import *
-from .constants import *
+from .ctypes_wrapper import spir_kernel, spir_sve_result, spir_basis, spir_funcs, spir_sampling
+from .constants import COMPUTATION_SUCCESS, ORDER_ROW_MAJOR
 
 def _find_library():
     """Find the SparseIR shared library."""
@@ -264,7 +261,7 @@ def sve_result_get_size(sve):
 def sve_result_get_svals(sve):
     """Get the singular values from an SVE result."""
     size = sve_result_get_size(sve)
-    svals = np.zeros(size, dtype=DOUBLE_DTYPE)
+    svals = np.zeros(size, dtype=np.float64)
     status = _lib.spir_sve_result_get_svals(sve, svals.ctypes.data_as(POINTER(c_double)))
     if status != COMPUTATION_SUCCESS:
         raise RuntimeError(f"Failed to get singular values: {status}")
@@ -291,7 +288,7 @@ def basis_get_size(basis):
 def basis_get_svals(basis):
     """Get the singular values of a basis."""
     size = basis_get_size(basis)
-    svals = np.zeros(size, dtype=DOUBLE_DTYPE)
+    svals = np.zeros(size, dtype=np.float64)
     status = _lib.spir_basis_get_svals(basis, svals.ctypes.data_as(POINTER(c_double)))
     if status != COMPUTATION_SUCCESS:
         raise RuntimeError(f"Failed to get singular values: {status}")
