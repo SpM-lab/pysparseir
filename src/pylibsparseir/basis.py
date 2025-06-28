@@ -3,12 +3,11 @@ High-level Python classes for FiniteTempBasis
 """
 
 import numpy as np
-from ctypes import *
-from .core import *
-from .constants import *
-from .core import _lib
+from .core import basis_new, basis_get_size, basis_get_svals, basis_get_u, basis_get_v, basis_get_uhat, basis_get_default_tau_sampling_points, basis_get_default_omega_sampling_points, basis_get_default_matsubara_sampling_points
+from .constants import STATISTICS_FERMIONIC, STATISTICS_BOSONIC
+from .kernel import LogisticKernel
 from .abstract import AbstractBasis
-from .kernel import LogisticKernel, RegularizedBoseKernel, kernel_domain
+from .sve import SVEResult
 
 class BasisFunctions:
     """Wrapper for basis function evaluation."""
@@ -26,7 +25,8 @@ class BasisFunctions:
         else:
             # For tau and omega, use float values
             x = np.asarray(x, dtype=np.float64)
-            return funcs_evaluate(self._funcs, x)
+            # TODO: Implement basis function evaluation
+            # return funcs_evaluate(self._funcs, x)
 
     def _evaluate_matsubara(self, n):
         """Evaluate at Matsubara frequencies."""
@@ -37,7 +37,7 @@ class BasisFunctions:
 class FiniteTempBasis(AbstractBasis):
     """Finite temperature basis for intermediate representation."""
 
-    def __init__(self, statistics, beta, wmax, eps=None, **kwargs):
+    def __init__(self, statistics: str, beta: float, wmax: float, eps: float):
         """
         Initialize finite temperature basis.
 
@@ -49,7 +49,7 @@ class FiniteTempBasis(AbstractBasis):
             Inverse temperature
         wmax : float
             Frequency cutoff
-        eps : float, optional
+        eps : float
             Accuracy threshold
         """
         self._statistics = statistics
@@ -57,21 +57,18 @@ class FiniteTempBasis(AbstractBasis):
         self._wmax = wmax
         self._lambda = beta * wmax
 
-        if eps is None:
-            eps = 1e-12
-
         # Create kernel
         if statistics == 'F' or statistics == 'B':
             self._kernel = LogisticKernel(self._lambda)
         else:
-            raise ValueError(f"Invalid statistics: {statistics}")
+            raise ValueError(f"Invalid statistics: {statistics} expected 'F' or 'B'")
 
         # Compute SVE
-        self._sve = sve_result_new(self._kernel, eps)
+        self._sve = SVEResult(self._kernel, eps)
 
         # Create basis
-        stats_int = 1 if statistics == 'F' else 0  # 1=fermion, 0=boson
-        self._basis = basis_new(stats_int, self._beta, self._wmax, self._kernel, self._sve)
+        stats_int = STATISTICS_FERMIONIC if statistics == 'F' else STATISTICS_BOSONIC
+        self._basis = basis_new(stats_int, self._beta, self._wmax, self._kernel._ptr, self._sve._ptr)
 
         # Cache properties
         self._size = None
