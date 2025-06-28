@@ -6,6 +6,9 @@ This module provides the abstract interface that all basis types should implemen
 
 from abc import ABC, abstractmethod
 
+class AbstractKernel(ABC):
+    """Abstract base class for kernels."""
+    pass
 
 class AbstractBasis(ABC):
     r"""Abstract base class for bases on the imaginary-time axis.
@@ -15,8 +18,8 @@ class AbstractBasis(ABC):
 
         G(τ) ≈ Σ_{l=0}^{L-1} g_l U_l(τ)
 
-    where U is now the l-th basis function, stored in u and g denote the 
-    expansion coefficients. Similarly, the Fourier transform Ĝ(n), where n 
+    where U is now the l-th basis function, stored in u and g denote the
+    expansion coefficients. Similarly, the Fourier transform Ĝ(n), where n
     is a reduced Matsubara frequency, can be expanded as follows:
 
         Ĝ(n) ≈ Σ_{l=0}^{L-1} g_l Û_l(n)
@@ -24,21 +27,21 @@ class AbstractBasis(ABC):
     where Û is the Fourier transform of the l-th basis function, stored
     in uhat.
 
-    Assuming that basis is an instance of some abstract basis, g is a vector 
-    of expansion coefficients, tau is some imaginary time and n some frequency, 
+    Assuming that basis is an instance of some abstract basis, g is a vector
+    of expansion coefficients, tau is some imaginary time and n some frequency,
     we can write this in the library as follows:
 
         G_tau = basis.u(tau).T @ gl
         G_n = basis.uhat(n).T @ gl
     """
-    
+
     @property
     @abstractmethod
     def u(self):
         r"""Basis functions on the imaginary time axis.
 
         Set of IR basis functions on the imaginary time (tau) axis, where tau
-        is a real number between zero and beta. To get the l-th basis function 
+        is a real number between zero and beta. To get the l-th basis function
         at imaginary time tau of some basis, use:
 
             ultau = basis.u[l](tau)        # l-th basis function at time tau

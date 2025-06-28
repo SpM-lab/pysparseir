@@ -9,6 +9,7 @@ import pytest
 import numpy as np
 import pylibsparseir
 
+from pylibsparseir.kernel import LogisticKernel, RegularizedBoseKernel
 
 @pytest.fixture(scope="session")
 def sve_logistic():
@@ -17,21 +18,21 @@ def sve_logistic():
     kernels = {}
     for lambda_ in [10, 42, 1000]:
         try:
-            kernel = pylibsparseir.logistic_kernel_new(lambda_)
+            kernel = LogisticKernel(lambda_)
             kernels[lambda_] = pylibsparseir.sve_result_new(kernel, 1e-12)
         except Exception as e:
             print(f"Failed to create SVE for lambda={lambda_}: {e}")
     return kernels
 
 
-@pytest.fixture(scope="session") 
+@pytest.fixture(scope="session")
 def sve_reg_bose():
     """Precomputed SVE results for regularized Bose kernels."""
     print("Precomputing SVEs for regularized Bose kernel ...")
     kernels = {}
     for lambda_ in [10, 1000]:
         try:
-            kernel = pylibsparseir.reg_bose_kernel_new(lambda_)
+            kernel = RegularizedBoseKernel(lambda_)
             kernels[lambda_] = pylibsparseir.sve_result_new(kernel, 1e-12)
         except Exception as e:
             print(f"Failed to create Bose SVE for lambda={lambda_}: {e}")
@@ -43,21 +44,21 @@ def test_bases():
     """Precomputed test bases for common parameter sets."""
     print("Precomputing test bases ...")
     bases = {}
-    
+
     test_params = [
         ('F', 1.0, 10.0, 1e-6),    # Small fermion
         ('F', 1.0, 42.0, 1e-8),    # Medium fermion
-        ('B', 1.0, 10.0, 1e-6),    # Small boson 
+        ('B', 1.0, 10.0, 1e-6),    # Small boson
         ('F', 4.0, 20.0, 1e-6),    # Different beta
     ]
-    
+
     for stat, beta, wmax, eps in test_params:
         try:
             basis = pylibsparseir.FiniteTempBasis(stat, beta, wmax, eps)
             bases[(stat, beta, wmax)] = basis
         except Exception as e:
             print(f"Failed to create basis {(stat, beta, wmax)}: {e}")
-    
+
     return bases
 
 
@@ -71,7 +72,7 @@ def rng():
 KERNEL_LAMBDAS = [10, 42, 1000]
 BASIS_PARAMS = [
     ('F', 1.0, 10.0),
-    ('F', 1.0, 42.0), 
+    ('F', 1.0, 42.0),
     ('B', 1.0, 10.0),
     ('F', 4.0, 20.0),
 ]
