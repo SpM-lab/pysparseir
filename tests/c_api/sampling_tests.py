@@ -12,6 +12,7 @@ from ctypes import c_int, c_double, c_bool, byref, POINTER
 
 from pylibsparseir.core import (
     _lib,
+    logistic_kernel_new, reg_bose_kernel_new,
     sve_result_new, basis_new,
     tau_sampling_new, matsubara_sampling_new,
     basis_get_default_tau_sampling_points,
@@ -20,16 +21,15 @@ from pylibsparseir.core import (
 )
 from pylibsparseir.ctypes_wrapper import *
 from pylibsparseir.constants import *
-from pylibsparseir.kernel import LogisticKernel, RegularizedBoseKernel
 
 
 def _spir_basis_new(stat, beta, wmax, epsilon):
     """Helper function to create basis directly via C API (for testing)."""
     # Create kernel
     if stat == STATISTICS_FERMIONIC:
-        kernel = LogisticKernel(beta * wmax)
+        kernel = logistic_kernel_new(beta * wmax)
     else:
-        kernel = RegularizedBoseKernel(beta * wmax)
+        kernel = reg_bose_kernel_new(beta * wmax)
 
     # Create SVE result
     sve = sve_result_new(kernel, epsilon)
@@ -38,7 +38,6 @@ def _spir_basis_new(stat, beta, wmax, epsilon):
     basis = basis_new(stat, beta, wmax, kernel, sve)
 
     return basis
-
 
 class TestSamplingBasics:
     """Test basic sampling functionality."""

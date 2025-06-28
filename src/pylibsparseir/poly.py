@@ -10,6 +10,85 @@ import numpy as np
 from scipy import special
 from scipy.integrate import quad
 
+class FunctionSet:
+    """
+    Represents a set of functions (u, v, or uhat basis functions).
+
+    This class provides methods to evaluate basis functions at single
+    or multiple points.
+    """
+
+    def __init__(self, funcs_ptr):
+        """
+        Initialize with a C funcs pointer.
+
+        Parameters
+        ----------
+        funcs_ptr : spir_funcs
+            Pointer to C funcs object
+        """
+        self._funcs = funcs_ptr
+
+        # Get size
+        size = c_int()
+        status = _lib.spir_funcs_get_size(self._funcs, byref(size))
+        if status != COMPUTATION_SUCCESS:
+            raise RuntimeError(f"Failed to get function set size: {status}")
+        self._size = size.value
+
+    def __call__(self, x):
+        """
+        Evaluate functions at point(s) x.
+
+        Parameters
+        ----------
+        x : float or array_like
+            Point(s) at which to evaluate
+
+        Returns
+        -------
+        ndarray
+            Function values. If x is scalar, returns 1D array of length size.
+            If x is array, returns 2D array of shape (len(x), size).
+        """
+        x = np.asarray(x)
+        if x.ndim == 0:
+            # Single point evaluation
+            out = np.zeros(self._size, dtype=DOUBLE_DTYPE)
+            status = _lib.spir_funcs_eval(
+                self._funcs, float(x), out.ctypes.data_as(POINTER(c_double))
+            )
+            if status != COMPUTATION_SUCCESS:
+                raise RuntimeError(f"Failed to evaluate functions: {status}")
+            return out
+        else:
+            # Multiple points evaluation
+            x = x.flatten()
+            out = np.zeros((len(x), self._size), dtype=DOUBLE_DTYPE)
+            status = _lib.spir_funcs_batch_eval(
+                self._funcs, ORDER_ROW_MAJOR, len(x),
+                x.ctypes.data_as(POINTER(c_double)),
+                out.ctypes.data_as(POINTER(c_double))
+            )
+            if status != COMPUTATION_SUCCESS:
+                raise RuntimeError(f"Failed to evaluate functions: {status}")
+            return out.reshape(x.shape + (self._size,))
+
+    @property
+    def size(self):
+        """Number of functions in this set."""
+        return self._size
+
+    def __len__(self):
+        """Number of functions in this set."""
+        return self._size
+
+    def __del__(self):
+        """Clean up resources."""
+        if hasattr(self, '_funcs') and self._funcs:
+            # TODO: Add cleanup when available in C API
+            pass
+
 
 class PiecewiseLegendrePoly:
     """
