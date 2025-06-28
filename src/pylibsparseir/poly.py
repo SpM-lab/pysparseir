@@ -23,7 +23,7 @@ class FunctionSet:
 
     def __del__(self):
         if hasattr(self, '_ptr') and self._ptr:
-            _lib.funcs_release(self._ptr)
+            _lib.spir_funcs_release(self._ptr)
 
 
 class PiecewiseLegendrePoly:

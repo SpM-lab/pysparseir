@@ -77,10 +77,7 @@ class FiniteTempBasis(AbstractBasis):
 
     @property
     def size(self):
-        """Number of basis functions."""
-        if self._size is None:
-            self._size = basis_get_size(self._ptr)
-        return self._size
+        return self._s.size
 
     @property
     def s(self):
