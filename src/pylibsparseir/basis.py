@@ -8,31 +8,7 @@ from .constants import STATISTICS_FERMIONIC, STATISTICS_BOSONIC
 from .kernel import LogisticKernel
 from .abstract import AbstractBasis
 from .sve import SVEResult
-
-class BasisFunctions:
-    """Wrapper for basis function evaluation."""
-
-    def __init__(self, funcs_ptr, func_type='u'):
-        self._funcs = funcs_ptr
-        self.func_type = func_type
-
-    def __call__(self, x):
-        """Evaluate basis functions at given points."""
-        if self.func_type == 'uhat':
-            # For Matsubara frequencies, use integer indices
-            x = np.asarray(x, dtype=np.int32)
-            return self._evaluate_matsubara(x)
-        else:
-            # For tau and omega, use float values
-            x = np.asarray(x, dtype=np.float64)
-            # TODO: Implement basis function evaluation
-            # return funcs_evaluate(self._funcs, x)
-
-    def _evaluate_matsubara(self, n):
-        """Evaluate at Matsubara frequencies."""
-        from .core import funcs_evaluate_matsubara
-        return funcs_evaluate_matsubara(self._funcs, n).T  # Transpose to match expected shape
-
+from .poly import PiecewiseLegendrePoly, PiecewiseLegendrePolyFT, FunctionSet
 
 class FiniteTempBasis(AbstractBasis):
     """Finite temperature basis for intermediate representation."""
@@ -68,14 +44,16 @@ class FiniteTempBasis(AbstractBasis):
 
         # Create basis
         stats_int = STATISTICS_FERMIONIC if statistics == 'F' else STATISTICS_BOSONIC
-        self._basis = basis_new(stats_int, self._beta, self._wmax, self._kernel._ptr, self._sve._ptr)
+        self._ptr = basis_new(stats_int, self._beta, self._wmax, self._kernel._ptr, self._sve._ptr)
 
-        # Cache properties
-        self._size = None
-        self._s = None
-        self._u = None
-        self._v = None
-        self._uhat = None
+        u_funcs = FunctionSet(basis_get_u(self._ptr))
+        v_funcs = FunctionSet(basis_get_v(self._ptr))
+        uhat_funcs = FunctionSet(basis_get_uhat(self._ptr))
+
+        self._s = basis_get_svals(self._ptr)
+        self._u = PiecewiseLegendrePoly(u_funcs, 0, self._beta)
+        self._v = PiecewiseLegendrePoly(v_funcs, -self._wmax, self._wmax)
+        self._uhat = PiecewiseLegendrePolyFT(uhat_funcs)
 
     @property
     def statistics(self):
@@ -101,38 +79,38 @@ class FiniteTempBasis(AbstractBasis):
     def size(self):
         """Number of basis functions."""
         if self._size is None:
-            self._size = basis_get_size(self._basis)
+            self._size = basis_get_size(self._ptr)
         return self._size
 
     @property
     def s(self):
         """Singular values."""
         if self._s is None:
-            self._s = basis_get_svals(self._basis)
+            self._s = basis_get_svals(self._ptr)
         return self._s
 
     @property
     def u(self):
         """Imaginary-time basis functions."""
         if self._u is None:
-            u_funcs = basis_get_u(self._basis)
-            self._u = BasisFunctions(u_funcs, 'u')
+            u_funcs = basis_get_u(self._ptr)
+            self._u = FunctionSet(u_funcs, 'u')
         return self._u
 
     @property
     def v(self):
         """Real-frequency basis functions."""
         if self._v is None:
-            v_funcs = basis_get_v(self._basis)
-            self._v = BasisFunctions(v_funcs, 'v')
+            v_funcs = basis_get_v(self._ptr)
+            self._v = FunctionSet(v_funcs, 'v')
         return self._v
 
     @property
     def uhat(self):
         """Matsubara frequency basis functions."""
         if self._uhat is None:
-            uhat_funcs = basis_get_uhat(self._basis)
-            self._uhat = BasisFunctions(uhat_funcs, 'uhat')
+            uhat_funcs = basis_get_uhat(self._ptr)
+            self._uhat = FunctionSet(uhat_funcs, 'uhat')
         return self._uhat
 
     @property
@@ -152,7 +130,7 @@ class FiniteTempBasis(AbstractBasis):
 
     def default_tau_sampling_points(self, npoints=None):
         """Get default tau sampling points."""
-        return basis_get_default_tau_sampling_points(self._basis)
+        return basis_get_default_tau_sampling_points(self._ptr)
 
     def default_omega_sampling_points(self, npoints=None):
         """
@@ -172,11 +150,11 @@ class FiniteTempBasis(AbstractBasis):
             Default omega sampling points
         """
         from .core import basis_get_default_omega_sampling_points
-        return basis_get_default_omega_sampling_points(self._basis)
+        return basis_get_default_omega_sampling_points(self._ptr)
 
     def default_matsubara_sampling_points(self, npoints=None, positive_only=False):
         """Get default Matsubara sampling points."""
-        return basis_get_default_matsubara_sampling_points(self._basis, positive_only)
+        return basis_get_default_matsubara_sampling_points(self._ptr, positive_only)
 
     def __repr__(self):
         return (f"FiniteTempBasis(statistics='{self.statistics}', "
