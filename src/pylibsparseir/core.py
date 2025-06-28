@@ -261,7 +261,7 @@ def sve_result_get_size(sve):
 def sve_result_get_svals(sve):
     """Get the singular values from an SVE result."""
     size = sve_result_get_size(sve)
-    svals = np.zeros(size, dtype=DOUBLE_DTYPE)
+    svals = np.zeros(size, dtype=np.float64)
     status = _lib.spir_sve_result_get_svals(sve, svals.ctypes.data_as(POINTER(c_double)))
     if status != COMPUTATION_SUCCESS:
         raise RuntimeError(f"Failed to get singular values: {status}")
@@ -288,7 +288,7 @@ def basis_get_size(basis):
 def basis_get_svals(basis):
     """Get the singular values of a basis."""
     size = basis_get_size(basis)
-    svals = np.zeros(size, dtype=DOUBLE_DTYPE)
+    svals = np.zeros(size, dtype=np.float64)
     status = _lib.spir_basis_get_svals(basis, svals.ctypes.data_as(POINTER(c_double)))
     if status != COMPUTATION_SUCCESS:
         raise RuntimeError(f"Failed to get singular values: {status}")
