@@ -4,15 +4,12 @@ Core functionality for the SparseIR Python bindings.
 
 import os
 import sys
-import ctypes
-from ctypes import *
+from ctypes import c_int, c_double, c_int64, c_size_t, c_bool, POINTER, byref
+from ctypes import CDLL
 import numpy as np
 
-# Define c_bool for compatibility
-c_bool = c_byte
-
-from .ctypes_wrapper import *
-from .constants import *
+from .ctypes_wrapper import spir_kernel, spir_sve_result, spir_basis, spir_funcs, spir_sampling
+from .constants import COMPUTATION_SUCCESS, ORDER_ROW_MAJOR
 
 def _find_library():
     """Find the SparseIR shared library."""
