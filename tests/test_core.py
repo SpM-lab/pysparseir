@@ -2,11 +2,10 @@
 Test cases for core functionality and C API wrappers
 """
 
-import pytest
 import numpy as np
-import pylibsparseir
-from pylibsparseir.core import *
-from pylibsparseir.kernel import LogisticKernel, RegularizedBoseKernel, kernel_domain
+from ctypes import c_double, byref
+from pylibsparseir.core import logistic_kernel_new, reg_bose_kernel_new, sve_result_new, sve_result_get_size, sve_result_get_svals, basis_new, basis_get_size, basis_get_stats, basis_get_svals, basis_get_u, basis_get_v, basis_get_uhat, basis_get_default_tau_sampling_points, basis_get_default_matsubara_sampling_points, tau_sampling_new, matsubara_sampling_new, funcs_evaluate
+from pylibsparseir.core import _lib
 
 class TestCoreAPI:
     """Test core C API wrapper functions."""
@@ -16,21 +15,25 @@ class TestCoreAPI:
         lambda_val = 80.0
 
         # Test logistic kernel
-        kernel_log = LogisticKernel(lambda_val)
+        kernel_log = logistic_kernel_new(lambda_val)
         assert kernel_log is not None
 
         # Test regularized boson kernel
-        kernel_bose = RegularizedBoseKernel(lambda_val)
+        kernel_bose = reg_bose_kernel_new(lambda_val)
         assert kernel_bose is not None
 
         # Test kernel domain
-        xmin, xmax, ymin, ymax = kernel_domain(kernel_log)
-        assert xmin < xmax
-        assert ymin < ymax
+        xmin = c_double()
+        xmax = c_double()
+        ymin = c_double()
+        ymax = c_double()
+        _lib.spir_kernel_domain(kernel_log, byref(xmin), byref(xmax), byref(ymin), byref(ymax))
+        assert xmin.value < xmax.value
+        assert ymin.value < ymax.value
 
     def test_sve_computation(self):
         """Test SVE computation."""
-        kernel = LogisticKernel(80.0)
+        kernel = logistic_kernel_new(80.0)
         eps = 1e-6
 
         sve = sve_result_new(kernel, eps)
@@ -46,7 +49,7 @@ class TestCoreAPI:
 
     def test_basis_creation(self):
         """Test basis creation and properties."""
-        kernel = LogisticKernel(80.0)
+        kernel = logistic_kernel_new(80.0)
         sve = sve_result_new(kernel, 1e-6)
 
         # Test fermion basis
@@ -69,7 +72,7 @@ class TestCoreAPI:
 
     def test_basis_functions(self):
         """Test basis function objects."""
-        kernel = LogisticKernel(80.0)
+        kernel = logistic_kernel_new(80.0)
         sve = sve_result_new(kernel, 1e-6)
         basis = basis_new(1, 10.0, 8.0, kernel, sve)
 
@@ -93,7 +96,7 @@ class TestCoreAPI:
 
     def test_default_sampling_points(self):
         """Test default sampling point functions."""
-        kernel = LogisticKernel(80.0)
+        kernel = logistic_kernel_new(80.0)
         sve = sve_result_new(kernel, 1e-6)
         basis = basis_new(1, 10.0, 8.0, kernel, sve)
 
@@ -112,7 +115,7 @@ class TestCoreAPI:
 
     def test_sampling_objects(self):
         """Test sampling object creation."""
-        kernel = LogisticKernel(80.0)
+        kernel = logistic_kernel_new(80.0)
         sve = sve_result_new(kernel, 1e-6)
         basis = basis_new(1, 10.0, 8.0, kernel, sve)
 
@@ -137,7 +140,7 @@ class TestErrorHandling:
         # Some "invalid" values might be handled gracefully
 
         # Test very small epsilon (this should still work)
-        kernel = LogisticKernel(80.0)
+        kernel = logistic_kernel_new(80.0)
         try:
             sve_result_new(kernel, 1e-20)  # Very small epsilon
         except RuntimeError:
