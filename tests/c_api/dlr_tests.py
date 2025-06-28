@@ -9,6 +9,7 @@ import pytest
 import numpy as np
 import ctypes
 from ctypes import c_int, c_double, byref, POINTER
+from pylibsparseir.kernel import LogisticKernel, RegularizedBoseKernel
 
 from pylibsparseir.core import (
     _lib,
@@ -27,13 +28,13 @@ def _spir_basis_new(stat, beta, wmax, epsilon):
         kernel = logistic_kernel_new(beta * wmax)
     else:
         kernel = reg_bose_kernel_new(beta * wmax)
-    
+
     # Create SVE result
     sve = sve_result_new(kernel, epsilon)
-    
+
     # Create basis
     basis = basis_new(stat, beta, wmax, kernel, sve)
-    
+
     return basis
 
 
@@ -46,34 +47,34 @@ class TestDLRConstruction:
         beta = 10000.0  # Large beta for better conditioning
         wmax = 1.0
         epsilon = 1e-12
-        
+
         # Create base IR basis
         ir_basis = _spir_basis_new(statistics, beta, wmax, epsilon)
         assert ir_basis is not None
-        
+
         # Get basis size
         basis_size = c_int()
         status = _lib.spir_basis_get_size(ir_basis, byref(basis_size))
         assert status == COMPUTATION_SUCCESS
         assert basis_size.value >= 0
-        
+
         # Get default poles
         n_default_poles = c_int()
         status = _lib.spir_basis_get_n_default_ws(ir_basis, byref(n_default_poles))
         assert status == COMPUTATION_SUCCESS
         assert n_default_poles.value >= 0
-        
+
         default_poles = np.zeros(n_default_poles.value, dtype=np.float64)
-        status = _lib.spir_basis_get_default_ws(ir_basis, 
+        status = _lib.spir_basis_get_default_ws(ir_basis,
                                                default_poles.ctypes.data_as(POINTER(c_double)))
         assert status == COMPUTATION_SUCCESS
-        
+
         # Create DLR using default poles
         dlr_status = c_int()
         dlr = _lib.spir_dlr_new(ir_basis, byref(dlr_status))
         assert dlr_status.value == COMPUTATION_SUCCESS
         assert dlr is not None
-        
+
         # Create DLR using custom poles (same as default)
         dlr_with_poles_status = c_int()
         dlr_with_poles = _lib.spir_dlr_new_with_poles(
@@ -83,24 +84,24 @@ class TestDLRConstruction:
         )
         assert dlr_with_poles_status.value == COMPUTATION_SUCCESS
         assert dlr_with_poles is not None
-        
+
         # Verify number of poles
         n_poles = c_int()
         status = _lib.spir_dlr_get_npoles(dlr, byref(n_poles))
         assert status == COMPUTATION_SUCCESS
         assert n_poles.value == n_default_poles.value
-        
+
         status = _lib.spir_dlr_get_npoles(dlr_with_poles, byref(n_poles))
         assert status == COMPUTATION_SUCCESS
         assert n_poles.value == n_default_poles.value
-        
+
         # Get poles and verify they match
         poles_reconst = np.zeros(n_poles.value, dtype=np.float64)
         status = _lib.spir_dlr_get_poles(dlr, poles_reconst.ctypes.data_as(POINTER(c_double)))
         assert status == COMPUTATION_SUCCESS
-        
+
         np.testing.assert_allclose(poles_reconst, default_poles, rtol=1e-14)
-        
+
         # Cleanup
         _lib.spir_basis_release(ir_basis)
         _lib.spir_basis_release(dlr)
@@ -112,25 +113,25 @@ class TestDLRConstruction:
         beta = 1000.0
         wmax = 2.0
         epsilon = 1e-10
-        
+
         # Create base IR basis
         ir_basis = _spir_basis_new(statistics, beta, wmax, epsilon)
         assert ir_basis is not None
-        
+
         # Get default poles
         n_default_poles = c_int()
         status = _lib.spir_basis_get_n_default_ws(ir_basis, byref(n_default_poles))
         assert status == COMPUTATION_SUCCESS
-        
+
         default_poles = np.zeros(n_default_poles.value, dtype=np.float64)
-        status = _lib.spir_basis_get_default_ws(ir_basis, 
+        status = _lib.spir_basis_get_default_ws(ir_basis,
                                                default_poles.ctypes.data_as(POINTER(c_double)))
         assert status == COMPUTATION_SUCCESS
-        
+
         # Use subset of poles (every other pole)
         custom_poles = default_poles[::2]  # Take every second pole
         n_custom_poles = len(custom_poles)
-        
+
         if n_custom_poles > 0:  # Only test if we have custom poles
             # Create DLR with custom poles
             dlr_custom_status = c_int()
@@ -141,28 +142,28 @@ class TestDLRConstruction:
             )
             assert dlr_custom_status.value == COMPUTATION_SUCCESS
             assert dlr_custom is not None
-            
+
             # Verify number of poles
             n_poles = c_int()
             status = _lib.spir_dlr_get_npoles(dlr_custom, byref(n_poles))
             assert status == COMPUTATION_SUCCESS
             assert n_poles.value == n_custom_poles
-            
+
             # Get poles and verify they are reasonable
             poles_reconst = np.zeros(n_poles.value, dtype=np.float64)
             status = _lib.spir_dlr_get_poles(dlr_custom, poles_reconst.ctypes.data_as(POINTER(c_double)))
             assert status == COMPUTATION_SUCCESS
-            
+
             # The DLR implementation may internally reorder or optimize poles
             # so we just verify we got the right number and they're in reasonable range
             assert len(poles_reconst) == n_custom_poles
             # Verify poles are in a reasonable range (should be real frequencies)
             assert np.all(np.isfinite(poles_reconst))
             assert np.any(np.abs(poles_reconst) > 1e-10)  # Should have some non-zero poles
-            
+
             # Cleanup
             _lib.spir_basis_release(dlr_custom)
-        
+
         # Cleanup
         _lib.spir_basis_release(ir_basis)
 
@@ -176,38 +177,38 @@ class TestDLRTransformations:
         beta = 1000.0
         wmax = 1.0
         epsilon = 1e-10
-        
+
         # Create IR basis
         ir_basis = _spir_basis_new(statistics, beta, wmax, epsilon)
         assert ir_basis is not None
-        
+
         # Create DLR
         dlr_status = c_int()
         dlr = _lib.spir_dlr_new(ir_basis, byref(dlr_status))
         assert dlr_status.value == COMPUTATION_SUCCESS
         assert dlr is not None
-        
+
         # Get dimensions
         n_poles = c_int()
         status = _lib.spir_dlr_get_npoles(dlr, byref(n_poles))
         assert status == COMPUTATION_SUCCESS
-        
+
         ir_size = c_int()
         status = _lib.spir_basis_get_size(ir_basis, byref(ir_size))
         assert status == COMPUTATION_SUCCESS
-        
+
         if n_poles.value > 0 and ir_size.value > 0:
             # Create test DLR coefficients
             np.random.seed(42)
             dlr_coeffs = np.random.randn(n_poles.value).astype(np.float64)
-            
+
             # Convert DLR to IR
             ir_coeffs = np.zeros(ir_size.value, dtype=np.float64)
-            
+
             ndim = 1
             dims = np.array([n_poles.value], dtype=np.int32)
             target_dim = 0
-            
+
             convert_status = _lib.spir_dlr2ir_dd(
                 dlr,
                 ORDER_COLUMN_MAJOR,
@@ -218,10 +219,10 @@ class TestDLRTransformations:
                 ir_coeffs.ctypes.data_as(POINTER(c_double))
             )
             assert convert_status == COMPUTATION_SUCCESS
-            
+
             # Verify that we got some non-zero IR coefficients
             assert np.any(np.abs(ir_coeffs) > 1e-15)
-        
+
         # Cleanup
         _lib.spir_basis_release(dlr)
         _lib.spir_basis_release(ir_basis)
@@ -232,31 +233,31 @@ class TestDLRTransformations:
         beta = 100.0
         wmax = 1.0
         epsilon = 1e-8
-        
+
         # Create IR basis
         ir_basis = _spir_basis_new(statistics, beta, wmax, epsilon)
         assert ir_basis is not None
-        
+
         # Create DLR
         dlr_status = c_int()
         dlr = _lib.spir_dlr_new(ir_basis, byref(dlr_status))
         assert dlr_status.value == COMPUTATION_SUCCESS
         assert dlr is not None
-        
+
         # Get dimensions
         n_poles = c_int()
         status = _lib.spir_dlr_get_npoles(dlr, byref(n_poles))
         assert status == COMPUTATION_SUCCESS
-        
+
         ir_size = c_int()
         status = _lib.spir_basis_get_size(ir_basis, byref(ir_size))
         assert status == COMPUTATION_SUCCESS
-        
+
         if n_poles.value > 0 and ir_size.value > 0:
             # Test 3D case
             d1, d2 = 2, 3
             ndim = 3
-            
+
             # Test conversion along each dimension
             for target_dim in range(3):
                 if target_dim == 0:
@@ -271,14 +272,14 @@ class TestDLRTransformations:
                     dims = np.array([d1, d2, n_poles.value], dtype=np.int32)
                     dlr_total_size = d1 * d2 * n_poles.value
                     ir_total_size = d1 * d2 * ir_size.value
-                
+
                 # Create test DLR coefficients
                 np.random.seed(42 + target_dim)
                 dlr_coeffs = np.random.randn(dlr_total_size).astype(np.float64)
-                
+
                 # Convert DLR to IR
                 ir_coeffs = np.zeros(ir_total_size, dtype=np.float64)
-                
+
                 convert_status = _lib.spir_dlr2ir_dd(
                     dlr,
                     ORDER_ROW_MAJOR,
@@ -289,10 +290,10 @@ class TestDLRTransformations:
                     ir_coeffs.ctypes.data_as(POINTER(c_double))
                 )
                 assert convert_status == COMPUTATION_SUCCESS
-                
+
                 # Verify that we got some non-zero IR coefficients
                 assert np.any(np.abs(ir_coeffs) > 1e-15)
-        
+
         # Cleanup
         _lib.spir_basis_release(dlr)
         _lib.spir_basis_release(ir_basis)
@@ -303,44 +304,44 @@ class TestDLRTransformations:
         beta = 100.0
         wmax = 1.0
         epsilon = 1e-8
-        
+
         # Create IR basis
         ir_basis = _spir_basis_new(statistics, beta, wmax, epsilon)
         assert ir_basis is not None
-        
+
         # Create DLR
         dlr_status = c_int()
         dlr = _lib.spir_dlr_new(ir_basis, byref(dlr_status))
         assert dlr_status.value == COMPUTATION_SUCCESS
         assert dlr is not None
-        
+
         # Get dimensions
         n_poles = c_int()
         status = _lib.spir_dlr_get_npoles(dlr, byref(n_poles))
         assert status == COMPUTATION_SUCCESS
-        
+
         ir_size = c_int()
         status = _lib.spir_basis_get_size(ir_basis, byref(ir_size))
         assert status == COMPUTATION_SUCCESS
-        
+
         if n_poles.value > 0 and ir_size.value > 0:
             # Create complex test DLR coefficients
             np.random.seed(42)
             dlr_real = np.random.randn(n_poles.value).astype(np.float64)
             dlr_imag = np.random.randn(n_poles.value).astype(np.float64)
-            
+
             # Pack into C complex format (interleaved real/imag)
             dlr_coeffs_complex = np.zeros(n_poles.value * 2, dtype=np.float64)
             dlr_coeffs_complex[0::2] = dlr_real  # Real parts at even indices
             dlr_coeffs_complex[1::2] = dlr_imag  # Imaginary parts at odd indices
-            
+
             # Convert DLR to IR
             ir_coeffs_complex = np.zeros(ir_size.value * 2, dtype=np.float64)
-            
+
             ndim = 1
             dims = np.array([n_poles.value], dtype=np.int32)
             target_dim = 0
-            
+
             convert_status = _lib.spir_dlr2ir_zz(
                 dlr,
                 ORDER_COLUMN_MAJOR,
@@ -351,10 +352,10 @@ class TestDLRTransformations:
                 ir_coeffs_complex.ctypes.data_as(POINTER(c_double))
             )
             assert convert_status == COMPUTATION_SUCCESS
-            
+
             # Verify that we got some non-zero IR coefficients
             assert np.any(np.abs(ir_coeffs_complex) > 1e-15)
-        
+
         # Cleanup
         _lib.spir_basis_release(dlr)
         _lib.spir_basis_release(ir_basis)

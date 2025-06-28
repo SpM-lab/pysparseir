@@ -52,7 +52,7 @@ This will:
 import pylibsparseir
 
 # Create a logistic kernel
-kernel = pylibsparseir.logistic_kernel_new(1.0)
+kernel = pylibsparseir.LogisticKernel(1.0)
 
 # Create a regularized bosonic kernel
 bose_kernel = pylibsparseir.reg_bose_kernel_new(1.0)
@@ -78,7 +78,7 @@ You can also import with an alias:
 ```python
 import pylibsparseir as pysparseir
 
-kernel = pysparseir.logistic_kernel_new(1.0)
+kernel = pysparseir.LogisticKernel(1.0)
 ```
 
 ## Development
