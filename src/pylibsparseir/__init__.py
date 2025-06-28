@@ -22,12 +22,6 @@ from .dlr import (
     DiscreteLehmannRepresentation, TauPoles, MatsubaraPoles
 )
 
-# Compatibility adapter
-from .adapter import (
-    Basis as AdapterBasis, load, sampling_points_x, sampling_points_y,
-    sampling_points_matsubara, create_basis, get_sampling_points
-)
-
 # Export list for better documentation
 __all__ = [
     # Core functionality
@@ -42,8 +36,4 @@ __all__ = [
 
     # DLR functionality
     'DiscreteLehmannRepresentation', 'TauPoles', 'MatsubaraPoles',
-
-    # Adapter functionality
-    'AdapterBasis', 'load', 'sampling_points_x', 'sampling_points_y',
-    'sampling_points_matsubara', 'create_basis', 'get_sampling_points',
 ]
