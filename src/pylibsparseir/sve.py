@@ -37,7 +37,7 @@ class SVEResult:
         self._kernel = kernel  # Store kernel for later use
         self._epsilon = epsilon
 
-        self._ptr = sve_result_new(kernel, epsilon)
+        self._ptr = sve_result_new(kernel._ptr, epsilon)
 
     def __len__(self):
         return sve_result_get_size(self._ptr)

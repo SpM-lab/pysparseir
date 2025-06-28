@@ -297,6 +297,7 @@ def basis_get_svals(basis):
         raise RuntimeError(f"Failed to get singular values: {status}")
     return svals
 
+
 def basis_get_stats(basis):
     """Get the statistics type of a basis."""
     stats = c_int()
