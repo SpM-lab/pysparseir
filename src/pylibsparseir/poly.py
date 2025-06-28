@@ -38,7 +38,20 @@ class PiecewiseLegendrePoly:
         """Evaluate basis functions at given points."""
         return self._funcs(x)
 
-class PiecewiseLegendrePolyFT:
+
+class PiecewiseLegendrePolyVector:
+    """Piecewise Legendre polynomial."""
+
+    def __init__(self, funcs: FunctionSet, xmin: float, xmax: float):
+        self._funcs = funcs
+        self._xmin = xmin
+        self._xmax = xmax
+
+    def __call__(self, x: np.ndarray) -> np.ndarray:
+        """Evaluate basis functions at given points."""
+        return self._funcs(x)
+
+class PiecewiseLegendrePolyFTVector:
     """Piecewise Legendre polynomial Fourier transform."""
 
     def __init__(self, funcs: FunctionSet):
