@@ -282,7 +282,7 @@ class TestDLRTransformations:
 
                 convert_status = _lib.spir_dlr2ir_dd(
                     dlr,
-                    ORDER_ROW_MAJOR,
+                    SPIR_ORDER_ROW_MAJOR,
                     ndim,
                     dims.ctypes.data_as(POINTER(c_int)),
                     target_dim,
@@ -344,7 +344,7 @@ class TestDLRTransformations:
 
             convert_status = _lib.spir_dlr2ir_zz(
                 dlr,
-                ORDER_COLUMN_MAJOR,
+                SPIR_ORDER_ROW_MAJOR,
                 ndim,
                 dims.ctypes.data_as(POINTER(c_int)),
                 target_dim,
