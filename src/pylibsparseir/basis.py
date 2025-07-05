@@ -88,26 +88,14 @@ class FiniteTempBasis(AbstractBasis):
 
     @property
     def u(self):
-        """Imaginary-time basis functions."""
-        if self._u is None:
-            u_funcs = basis_get_u(self._ptr)
-            self._u = FunctionSet(u_funcs, 'u')
         return self._u
 
     @property
     def v(self):
-        """Real-frequency basis functions."""
-        if self._v is None:
-            v_funcs = basis_get_v(self._ptr)
-            self._v = FunctionSet(v_funcs, 'v')
         return self._v
 
     @property
     def uhat(self):
-        """Matsubara frequency basis functions."""
-        if self._uhat is None:
-            uhat_funcs = basis_get_uhat(self._ptr)
-            self._uhat = FunctionSet(uhat_funcs, 'uhat')
         return self._uhat
 
     @property

@@ -6,10 +6,19 @@ their Fourier transforms, which serve as core mathematical infrastructure
 for IR basis functions.
 """
 
+from ctypes import c_int, POINTER
 import numpy as np
 
 from pylibsparseir.core import _lib
+from pylibsparseir.core import funcs_evaluate, funcs_eval_single
 
+def funcs_get_slice(funcs_ptr, indices):
+    status = c_int()
+    indices = np.asarray(indices, dtype=np.int32)
+    funcs = _lib.spir_funcs_get_slice(funcs_ptr, len(indices), indices.ctypes.data_as(POINTER(c_int)), status)
+    if status.value != 0:
+        raise RuntimeError(f"Failed to get basis function {indices}: {status.value}")
+    return FunctionSet(funcs)
 
 class FunctionSet:
     """Wrapper for basis function evaluation."""
@@ -19,7 +28,22 @@ class FunctionSet:
 
     def __call__(self, x):
         """Evaluate basis functions at given points."""
-        return _lib.funcs_evaluate(self._ptr, x)
+        if not isinstance(x, np.ndarray):
+            o = funcs_eval_single(self._ptr, x)
+            if len(o) == 1:
+                return o[0]
+            else:
+                return o
+        else:
+            o = funcs_evaluate(self._ptr, x)
+            if len(o) == 1:
+                return o[0]
+            else:
+                return o
+
+    def __getitem__(self, index):
+        """Get a single basis function."""
+        return funcs_get_slice(self._ptr, [index])
 
     def __del__(self):
         if hasattr(self, '_ptr') and self._ptr:
@@ -34,7 +58,7 @@ class PiecewiseLegendrePoly:
         self._xmin = xmin
         self._xmax = xmax
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x):
         """Evaluate basis functions at given points."""
         return self._funcs(x)
 
@@ -47,9 +71,14 @@ class PiecewiseLegendrePolyVector:
         self._xmin = xmin
         self._xmax = xmax
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x):
         """Evaluate basis functions at given points."""
         return self._funcs(x)
+
+    def __getitem__(self, index):
+        """Get a single basis function."""
+        return PiecewiseLegendrePoly(self._funcs[index], self._xmin, self._xmax)
+
 
 class PiecewiseLegendrePolyFTVector:
     """Piecewise Legendre polynomial Fourier transform."""
