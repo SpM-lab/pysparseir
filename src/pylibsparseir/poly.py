@@ -35,11 +35,7 @@ class FunctionSet:
             else:
                 return o
         else:
-            o = funcs_evaluate(self._ptr, x)
-            if len(o) == 1:
-                return o[0]
-            else:
-                return o
+            return np.stack([funcs_eval_single(self._ptr, e) for e in x]).T
 
     def __getitem__(self, index):
         """Get a single basis function."""
