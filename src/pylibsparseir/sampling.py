@@ -62,7 +62,7 @@ class TauSampling:
         status = _lib.spir_sampling_eval_dd(
             self._ptr,
             SPIR_ORDER_ROW_MAJOR,
-            len(self.sampling_points),
+            ndim,
             input_dims.ctypes.data_as(POINTER(c_int)),
             axis,
             self.sampling_points.ctypes.data_as(POINTER(c_double)),
