@@ -49,8 +49,6 @@ class TestFiniteTempBasis:
         acc = basis.accuracy
         assert 0 < acc <= 1.0
 
-    # skip this test for now
-    @pytest.mark.skip(reason="Skipping basis function evaluation test for now")
     def test_basis_function_evaluation(self):
         """Test basis function evaluation."""
         basis = pylibsparseir.FiniteTempBasis('F', 10.0, 8.0, 1e-6)
@@ -121,7 +119,6 @@ def test_finite_temp_bases():
 
 class TestBasisFunctionEvaluation:
     """Test basis function evaluation accuracy."""
-    @pytest.mark.skip(reason="Skipping basis function evaluation test for now")
     def test_u_function_finite(self):
         """Test that u functions evaluate to finite values."""
         basis = pylibsparseir.FiniteTempBasis('F', 1.0, 10.0, 1e-6)
@@ -136,7 +133,6 @@ class TestBasisFunctionEvaluation:
         # u functions should not be trivially zero
         assert np.any(np.abs(u_vals) > 1e-10), "u functions should not be all zero"
 
-    @pytest.mark.skip(reason="Skipping basis function evaluation test for now")
     def test_v_function_finite(self):
         """Test that v functions evaluate to finite values."""
         basis = pylibsparseir.FiniteTempBasis('F', 1.0, 10.0, 1e-6)
