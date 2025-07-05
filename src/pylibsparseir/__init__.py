@@ -19,7 +19,7 @@ from .augment import (
 
 # DLR functionality
 from .dlr import (
-    DiscreteLehmannRepresentation, TauPoles, MatsubaraPoles
+    DiscreteLehmannRepresentation
 )
 
 # Export list for better documentation
