@@ -57,7 +57,7 @@ class TauSampling:
         ndim = len(output_dims)
         input_dims = np.asarray(al.shape, dtype=np.int32)
         output_dims[axis] = len(self.sampling_points)
-        output = np.zeros(output_dims, dtype=al.dtype)
+        output = np.zeros(output_dims, dtype=np.float64)
 
         status = _lib.spir_sampling_eval_dd(
             self._ptr,
@@ -65,7 +65,6 @@ class TauSampling:
             ndim,
             input_dims.ctypes.data_as(POINTER(c_int)),
             axis,
-            self.sampling_points.ctypes.data_as(POINTER(c_double)),
             al.ctypes.data_as(POINTER(c_double)),
             output.ctypes.data_as(POINTER(c_double))
         )
@@ -74,44 +73,29 @@ class TauSampling:
 
         return output
 
-    def fit(self, ax, axis=None):
+    def fit(self, ax, axis=0):
         """
         Fit basis coefficients from sampling point values.
-
-        Parameters:
-        -----------
-        ax : array_like
-            Values at sampling points
-        axis : int, optional
-            Axis along which to fit
-
-        Returns:
-        --------
-        ndarray
-            Basis coefficients
         """
-        ax = np.asarray(ax, dtype=np.float64)
+        ndim = len(ax.shape)
+        input_dims = np.asarray(ax.shape, dtype=np.int32)
+        output_dims = list(ax.shape)
+        output_dims[axis] = len(self.sampling_points)
+        output = np.zeros(output_dims, dtype=np.float64)
 
-        # Simple case: 1D array
-        if ax.ndim == 1:
-            if len(ax) != len(self.sampling_points):
-                raise ValueError(f"Expected {len(self.sampling_points)} values, got {len(ax)}")
+        status = _lib.spir_sampling_fit_dd(
+            self._ptr,
+            SPIR_ORDER_ROW_MAJOR,
+            ndim,
+            input_dims.ctypes.data_as(POINTER(c_int)),
+            axis,
+            ax.ctypes.data_as(POINTER(c_double)),
+            output.ctypes.data_as(POINTER(c_double))
+        )
+        if status != COMPUTATION_SUCCESS:
+            raise RuntimeError(f"Failed to fit sampling: {status}")
 
-            result = np.zeros(self.basis.size, dtype=np.float64)
-
-            # Call C function for fitting
-            dims = np.array([len(self.sampling_points)], dtype=np.int32)
-            status = _lib.spir_sampling_fit_dd(
-                self._ptr, 0, 1, dims.ctypes.data_as(POINTER(c_int)), 0,
-                ax.ctypes.data_as(POINTER(c_double)),
-                result.ctypes.data_as(POINTER(c_double))
-            )
-            if status != COMPUTATION_SUCCESS:
-                raise RuntimeError(f"Failed to fit sampling: {status}")
-
-            return result
-        else:
-            raise NotImplementedError("Multi-dimensional arrays not yet implemented")
+        return output
 
     def __repr__(self):
         return f"TauSampling(n_points={len(self.sampling_points)})"
@@ -187,34 +171,29 @@ class MatsubaraSampling:
 
         return output
 
-    def fit(self, ax, axis=None):
+    def fit(self, ax, axis=0):
         """
         Fit basis coefficients from Matsubara frequency values.
-
-        Parameters:
-        -----------
-        ax : array_like
-            Values at Matsubara frequencies
-        axis : int, optional
-            Axis along which to fit
-
-        Returns:
-        --------
-        ndarray
-            Basis coefficients
         """
-        ax = np.asarray(ax, dtype=np.complex128)
+        ndim = len(ax.shape)
+        input_dims = np.asarray(ax.shape, dtype=np.int32)
+        output_dims = list(ax.shape)
+        output_dims[axis] = len(self.sampling_points)
+        output = np.zeros(output_dims, dtype=c_double_complex)
 
-        # Simple case: 1D array
-        if ax.ndim == 1:
-            if len(ax) != len(self.sampling_points):
-                raise ValueError(f"Expected {len(self.sampling_points)} values, got {len(ax)}")
+        status = _lib.spir_sampling_fit_zz(
+            self._ptr,
+            SPIR_ORDER_ROW_MAJOR,
+            ndim,
+            input_dims.ctypes.data_as(POINTER(c_int)),
+            axis,
+            ax.ctypes.data_as(POINTER(c_double_complex)),
+            output.ctypes.data_as(POINTER(c_double_complex))
+        )
+        if status != COMPUTATION_SUCCESS:
+            raise RuntimeError(f"Failed to fit sampling: {status}")
 
-            # For complex data, we need to use the complex version
-            # This is a simplified implementation - may need adjustment based on actual C API
-            raise NotImplementedError("Complex Matsubara fitting not yet implemented")
-        else:
-            raise NotImplementedError("Multi-dimensional arrays not yet implemented")
+        return output['real'] + 1j * output['imag']
 
     def __repr__(self):
         return f"MatsubaraSampling(n_points={len(self.sampling_points)}, positive_only={self.positive_only})"
