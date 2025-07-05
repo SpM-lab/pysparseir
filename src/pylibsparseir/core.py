@@ -90,6 +90,9 @@ def _setup_prototypes():
     _lib.spir_basis_get_uhat.argtypes = [spir_basis, POINTER(c_int)]
     _lib.spir_basis_get_uhat.restype = spir_funcs
 
+    _lib.spir_funcs_get_slice.argtypes = [spir_funcs, c_int, POINTER(c_int), POINTER(c_int)]
+    _lib.spir_funcs_get_slice.restype = spir_funcs
+
     # Function evaluation
     _lib.spir_funcs_get_size.argtypes = [spir_funcs, POINTER(c_int)]
     _lib.spir_funcs_get_size.restype = c_int
