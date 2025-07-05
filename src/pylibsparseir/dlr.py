@@ -112,6 +112,7 @@ class DiscreteLehmannRepresentation(AbstractBasis):
                 ndim,
                 input_dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)),
                 target_dim,
+                # TODO: use complex data
                 gl.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                 output.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
             )
@@ -155,6 +156,7 @@ class DiscreteLehmannRepresentation(AbstractBasis):
                 ndim,
                 input_dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int)),
                 target_dim,
+                # TODO: use complex data
                 g_dlr.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
                 output.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
             )

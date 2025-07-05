@@ -4,6 +4,7 @@ Core functionality for the SparseIR Python bindings.
 
 import os
 import sys
+import ctypes
 from ctypes import c_int, c_double, c_int64, c_size_t, c_bool, POINTER, byref
 from ctypes import CDLL
 import numpy as np
@@ -39,6 +40,17 @@ try:
     _lib = CDLL(_find_library())
 except Exception as e:
     raise RuntimeError(f"Failed to load SparseIR library: {e}")
+
+class c_double_complex(ctypes.Structure):
+    """complex is a c structure
+    https://docs.python.org/3/library/ctypes.html#module-ctypes suggests
+    to use ctypes.Structure to pass structures (and, therefore, complex)
+    See: https://stackoverflow.com/questions/13373291/complex-number-in-ctypes
+    """
+    _fields_ = [("real", ctypes.c_double),("imag", ctypes.c_double)]
+    @property
+    def value(self):
+        return self.real+1j*self.imag # fields declared above
 
 # Set up function prototypes
 def _setup_prototypes():
@@ -165,7 +177,7 @@ def _setup_prototypes():
     # Multi-dimensional sampling evaluation functions
     _lib.spir_sampling_eval_dz.argtypes = [
         spir_sampling, c_int, c_int, POINTER(c_int), c_int,
-        POINTER(c_double), POINTER(c_double)
+        POINTER(c_double), POINTER(c_double_complex)
     ]
     _lib.spir_sampling_eval_dz.restype = c_int
 
