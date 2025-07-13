@@ -11,7 +11,7 @@ from .constants import COMPUTATION_SUCCESS, SPIR_ORDER_ROW_MAJOR
 class TauSampling:
     """Sparse sampling in imaginary time."""
 
-    def __init__(self, basis, sampling_points=None):
+    def __init__(self, basis, sampling_points=None, use_positive_taus=True):
         """
         Initialize tau sampling.
 
@@ -21,13 +21,19 @@ class TauSampling:
             Finite temperature basis
         sampling_points : array_like, optional
             Tau sampling points. If None, use default.
+        use_positive_taus : bool, optional
+            If `use_positive_taus=True`, the sampling points are folded to the positive tau domain [0, β).
         """
         self.basis = basis
 
         if sampling_points is None:
             self.sampling_points = basis.default_tau_sampling_points()
+            if use_positive_taus:
+                self.sampling_points = np.mod(self.sampling_points, basis.beta)
         else:
             self.sampling_points = np.asarray(sampling_points, dtype=np.float64)
+
+        self.sampling_points = np.sort(self.sampling_points)
 
         # Create sampling object
         self._ptr = tau_sampling_new(basis._ptr, self.sampling_points)
