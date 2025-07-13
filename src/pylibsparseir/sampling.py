@@ -3,7 +3,7 @@ High-level Python classes for sparse sampling
 """
 
 import numpy as np
-from ctypes import POINTER, c_double, c_int
+from ctypes import POINTER, c_double, c_int, byref
 from .core import c_double_complex, tau_sampling_new, matsubara_sampling_new, _lib
 from .constants import COMPUTATION_SUCCESS, SPIR_ORDER_ROW_MAJOR
 
@@ -96,6 +96,15 @@ class TauSampling:
             raise RuntimeError(f"Failed to fit sampling: {status}")
 
         return output
+
+    @property
+    def cond(self):
+        """Condition number of the sampling matrix."""
+        cond = c_double()
+        status = _lib.spir_sampling_get_cond_num(self._ptr, byref(cond))
+        if status != COMPUTATION_SUCCESS:
+            raise RuntimeError(f"Failed to get condition number: {status}")
+        return cond.value
 
     def __repr__(self):
         return f"TauSampling(n_points={len(self.sampling_points)})"
@@ -194,6 +203,15 @@ class MatsubaraSampling:
             raise RuntimeError(f"Failed to fit sampling: {status}")
 
         return output['real'] + 1j * output['imag']
+
+    @property
+    def cond(self):
+        """Condition number of the sampling matrix."""
+        cond = c_double()
+        status = _lib.spir_sampling_get_cond_num(self._ptr, byref(cond))
+        if status != COMPUTATION_SUCCESS:
+            raise RuntimeError(f"Failed to get condition number: {status}")
+        return cond.value
 
     def __repr__(self):
         return f"MatsubaraSampling(n_points={len(self.sampling_points)}, positive_only={self.positive_only})"
