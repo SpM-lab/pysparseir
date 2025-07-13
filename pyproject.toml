@@ -33,6 +33,7 @@ build-backend = "setuptools.build_meta"
 [dependency-groups]
 dev = [
     "ipykernel>=6.29.5",
+    "matplotlib>=3.10.3",
     "pytest>=8.4.1",
 ]
 
