@@ -189,7 +189,7 @@ def _setup_prototypes():
 
     _lib.spir_sampling_eval_zz.argtypes = [
         spir_sampling, c_int, c_int, POINTER(c_int), c_int,
-        POINTER(c_double), POINTER(c_double)
+        POINTER(c_double_complex), POINTER(c_double_complex)
     ]
     _lib.spir_sampling_eval_zz.restype = c_int
 

@@ -63,17 +63,34 @@ class TauSampling:
         ndim = len(output_dims)
         input_dims = np.asarray(al.shape, dtype=np.int32)
         output_dims[axis] = len(self.sampling_points)
-        output = np.zeros(output_dims, dtype=np.float64)
+        if al.dtype.kind == "f":
+            output = np.zeros(output_dims, dtype=np.float64)
 
-        status = _lib.spir_sampling_eval_dd(
-            self._ptr,
-            SPIR_ORDER_ROW_MAJOR,
-            ndim,
-            input_dims.ctypes.data_as(POINTER(c_int)),
-            axis,
-            al.ctypes.data_as(POINTER(c_double)),
-            output.ctypes.data_as(POINTER(c_double))
-        )
+            status = _lib.spir_sampling_eval_dd(
+                self._ptr,
+                SPIR_ORDER_ROW_MAJOR,
+                ndim,
+                input_dims.ctypes.data_as(POINTER(c_int)),
+                axis,
+                al.ctypes.data_as(POINTER(c_double)),
+                output.ctypes.data_as(POINTER(c_double))
+            )
+        elif al.dtype.kind == "c":
+            output = np.zeros(output_dims, dtype=c_double_complex)
+
+            status = _lib.spir_sampling_eval_zz(
+                self._ptr,
+                SPIR_ORDER_ROW_MAJOR,
+                ndim,
+                input_dims.ctypes.data_as(POINTER(c_int)),
+                axis,
+                al.ctypes.data_as(POINTER(c_double_complex)),
+                output.ctypes.data_as(POINTER(c_double_complex))
+            )
+            output = output['real'] + 1j * output['imag']
+        else:
+            raise ValueError(f"Unsupported dtype: {al.dtype}")
+
         if status != COMPUTATION_SUCCESS:
             raise RuntimeError(f"Failed to evaluate sampling: {status}")
 
@@ -87,17 +104,32 @@ class TauSampling:
         input_dims = np.asarray(ax.shape, dtype=np.int32)
         output_dims = list(ax.shape)
         output_dims[axis] = len(self.sampling_points)
-        output = np.zeros(output_dims, dtype=np.float64)
-
-        status = _lib.spir_sampling_fit_dd(
-            self._ptr,
-            SPIR_ORDER_ROW_MAJOR,
+        if ax.dtype.kind == "f":
+            output = np.zeros(output_dims, dtype=np.float64)
+            status = _lib.spir_sampling_fit_dd(
+                self._ptr,
+                SPIR_ORDER_ROW_MAJOR,
             ndim,
             input_dims.ctypes.data_as(POINTER(c_int)),
             axis,
             ax.ctypes.data_as(POINTER(c_double)),
             output.ctypes.data_as(POINTER(c_double))
         )
+        elif ax.dtype.kind == "c":
+            output = np.zeros(output_dims, dtype=c_double_complex)
+            status = _lib.spir_sampling_fit_zz(
+                self._ptr,
+                SPIR_ORDER_ROW_MAJOR,
+                ndim,
+                input_dims.ctypes.data_as(POINTER(c_int)),
+                axis,
+                ax.ctypes.data_as(POINTER(c_double_complex)),
+                output.ctypes.data_as(POINTER(c_double_complex))
+            )
+            output = output['real'] + 1j * output['imag']
+        else:
+            raise ValueError(f"Unsupported dtype: {ax.dtype}")
+
         if status != COMPUTATION_SUCCESS:
             raise RuntimeError(f"Failed to fit sampling: {status}")
 
@@ -169,8 +201,8 @@ class MatsubaraSampling:
         input_dims = np.asarray(al.shape, dtype=np.int32)
         output_dims[axis] = len(self.sampling_points)
         output_cdouble_complex = np.zeros(output_dims, dtype=c_double_complex)
-
-        status = _lib.spir_sampling_eval_dz(
+        if al.dtype.kind == "f":
+            status = _lib.spir_sampling_eval_dz(
             self._ptr,
             SPIR_ORDER_ROW_MAJOR,
             ndim,
@@ -179,12 +211,24 @@ class MatsubaraSampling:
             al.ctypes.data_as(POINTER(c_double)),
             output_cdouble_complex.ctypes.data_as(POINTER(c_double_complex))
         )
+        elif al.dtype.kind == "c":
+            status = _lib.spir_sampling_eval_zz(
+                self._ptr,
+                SPIR_ORDER_ROW_MAJOR,
+                ndim,
+                input_dims.ctypes.data_as(POINTER(c_int)),
+                axis,
+                al.ctypes.data_as(POINTER(c_double_complex)),
+                output_cdouble_complex.ctypes.data_as(POINTER(c_double_complex))
+            )
+            output_cdouble_complex = output_cdouble_complex['real'] + 1j * output_cdouble_complex['imag']
+        else:
+            raise ValueError(f"Unsupported dtype: {al.dtype}")
+
         if status != COMPUTATION_SUCCESS:
             raise RuntimeError(f"Failed to evaluate sampling: {status}")
 
-        output = output_cdouble_complex['real'] + 1j * output_cdouble_complex['imag']
-
-        return output
+        return output_cdouble_complex
 
     def fit(self, ax, axis=0):
         """
