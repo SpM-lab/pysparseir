@@ -122,8 +122,6 @@ class PiecewiseLegendrePolyFT:
     """Piecewise Legendre polynomial Fourier transform."""
 
     def __init__(self, funcs: FunctionSetFT):
-        print(type(funcs))
-
         assert isinstance(funcs, FunctionSetFT), "funcs must be a FunctionSetFT"
         self._funcs = funcs
         self._xmin = -1.0
