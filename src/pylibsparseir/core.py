@@ -112,6 +112,9 @@ def _setup_prototypes():
     _lib.spir_funcs_eval.argtypes = [spir_funcs, c_double, POINTER(c_double)]
     _lib.spir_funcs_eval.restype = c_int
 
+    _lib.spir_funcs_eval_matsu.argtypes = [spir_funcs, c_int64, POINTER(c_double_complex)]
+    _lib.spir_funcs_eval_matsu.restype = c_int
+
     _lib.spir_funcs_batch_eval.argtypes = [
         spir_funcs, c_int, c_size_t, POINTER(c_double), POINTER(c_double)
     ]
@@ -342,7 +345,7 @@ def basis_get_uhat(basis):
         raise RuntimeError(f"Failed to get uhat basis functions: {status.value}")
     return funcs
 
-def funcs_eval_single(funcs, x):
+def funcs_eval_single_float64(funcs, x):
     """Evaluate basis functions at a single point."""
     # Get number of functions
     size = c_int()
@@ -362,6 +365,28 @@ def funcs_eval_single(funcs, x):
         raise RuntimeError(f"Failed to evaluate functions: {status}")
 
     return out
+
+def funcs_eval_single_complex128(funcs, x):
+    """Evaluate basis functions at a single point."""
+    # Get number of functions
+    size = c_int()
+    status = _lib.spir_funcs_get_size(funcs, byref(size))
+    if status != COMPUTATION_SUCCESS:
+        raise RuntimeError(f"Failed to get function size: {status}")
+
+    # Prepare output array
+    out = np.zeros(size.value, dtype=np.complex128)
+
+    # Evaluate
+    status = _lib.spir_funcs_eval_matsu(
+        funcs, c_int64(x),
+        out.ctypes.data_as(POINTER(c_double_complex))
+    )
+    if status != COMPUTATION_SUCCESS:
+        raise RuntimeError(f"Failed to evaluate functions: {status}")
+
+    return out
+
 
 def funcs_evaluate(funcs, x):
     """Evaluate basis functions at given points."""

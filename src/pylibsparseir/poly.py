@@ -10,7 +10,7 @@ from ctypes import c_int, POINTER
 import numpy as np
 
 from pylibsparseir.core import _lib
-from pylibsparseir.core import funcs_evaluate, funcs_eval_single
+from pylibsparseir.core import funcs_eval_single_float64, funcs_eval_single_complex128
 
 def funcs_get_slice(funcs_ptr, indices):
     status = c_int()
@@ -29,13 +29,17 @@ class FunctionSet:
     def __call__(self, x):
         """Evaluate basis functions at given points."""
         if not isinstance(x, np.ndarray):
-            o = funcs_eval_single(self._ptr, x)
+            o = funcs_eval_single_float64(self._ptr, x)
             if len(o) == 1:
                 return o[0]
             else:
                 return o
         else:
-            return np.stack([funcs_eval_single(self._ptr, e) for e in x]).T
+            o = np.stack([funcs_eval_single_float64(self._ptr, e) for e in x]).T
+            if len(o) == 1:
+                return o[0]
+            else:
+                return o
 
     def __getitem__(self, index):
         """Get a single basis function."""
@@ -45,6 +49,34 @@ class FunctionSet:
         if hasattr(self, '_ptr') and self._ptr:
             _lib.spir_funcs_release(self._ptr)
 
+class FunctionSetFT:
+    """Wrapper for basis function evaluation."""
+
+    def __init__(self, funcs_ptr):
+        self._ptr = funcs_ptr
+
+    def __call__(self, x):
+        """Evaluate basis functions at given points."""
+        if not isinstance(x, np.ndarray):
+            o = funcs_eval_single_complex128(self._ptr, x)
+            if len(o) == 1:
+                return o[0]
+            else:
+                return o
+        else:
+            o = np.stack([funcs_eval_single_complex128(self._ptr, e) for e in x]).T
+            if len(o) == 1:
+                return o[0]
+            else:
+                return o
+
+    def __getitem__(self, index):
+        """Get a single basis function."""
+        return funcs_get_slice(self._ptr, [index])
+
+    def __del__(self):
+        if hasattr(self, '_ptr') and self._ptr:
+            _lib.spir_funcs_release(self._ptr)
 
 class PiecewiseLegendrePoly:
     """Piecewise Legendre polynomial."""
@@ -79,7 +111,7 @@ class PiecewiseLegendrePolyVector:
 class PiecewiseLegendrePolyFTVector:
     """Piecewise Legendre polynomial Fourier transform."""
 
-    def __init__(self, funcs: FunctionSet):
+    def __init__(self, funcs: FunctionSetFT):
         self._funcs = funcs
         self._xmin = -1.0
         self._xmax = 1.0
