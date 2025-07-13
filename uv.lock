@@ -642,7 +642,6 @@ dev = [
     { name = "ipykernel" },
     { name = "matplotlib" },
     { name = "pytest" },
-    { name = "sparse-ir" },
 ]
 
 [package.metadata]
@@ -656,7 +655,6 @@ dev = [
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "matplotlib", specifier = ">=3.10.3" },
     { name = "pytest", specifier = ">=8.4.1" },
-    { name = "sparse-ir", specifier = ">=1.1.7" },
 ]
 
 [[package]]
@@ -769,35 +767,12 @@ wheels = [
 ]
 
 [[package]]
-name = "setuptools"
-version = "80.9.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/18/5d/3bf57dcd21979b887f014ea83c24ae194cfcd12b9e0fda66b957c69d1fca/setuptools-80.9.0.tar.gz", hash = "sha256:f36b47402ecde768dbfafc46e8e4207b4360c654f1f3bb84475f0a28628fb19c", size = 1319958 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a3/dc/17031897dae0efacfea57dfd3a82fdd2a2aeb58e0ff71b77b87e44edc772/setuptools-80.9.0-py3-none-any.whl", hash = "sha256:062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922", size = 1201486 },
-]
-
-[[package]]
 name = "six"
 version = "1.17.0"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050 },
-]
-
-[[package]]
-name = "sparse-ir"
-version = "1.1.7"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-    { name = "scipy" },
-    { name = "setuptools" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/c4/a6/aaf8857f6f94eb2c657f0f723abf16cdb45059fac981416153d7d06f3cdd/sparse-ir-1.1.7.tar.gz", hash = "sha256:8b79417a79405a206be182e4dfe3d6f12e2c0d5e966a46332dc4d6e2406812c3", size = 51166 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/54/bd/db8dff16c5c97312cc391ca53f0892fce625fd22d046de1e6d354af8b01a/sparse_ir-1.1.7-py3-none-any.whl", hash = "sha256:a285464605b2eb160d3540137e74064fea7c6b6f36b0ab7b0ba30330f8c7f412", size = 49326 },
 ]
 
 [[package]]
