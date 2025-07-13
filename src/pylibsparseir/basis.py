@@ -8,7 +8,7 @@ from .constants import STATISTICS_FERMIONIC, STATISTICS_BOSONIC
 from .kernel import LogisticKernel
 from .abstract import AbstractBasis
 from .sve import SVEResult
-from .poly import PiecewiseLegendrePolyVector, PiecewiseLegendrePolyFTVector, FunctionSet
+from .poly import PiecewiseLegendrePolyVector, PiecewiseLegendrePolyFTVector, FunctionSet, FunctionSetFT
 
 class FiniteTempBasis(AbstractBasis):
     """Finite temperature basis for intermediate representation."""
@@ -48,7 +48,7 @@ class FiniteTempBasis(AbstractBasis):
 
         u_funcs = FunctionSet(basis_get_u(self._ptr))
         v_funcs = FunctionSet(basis_get_v(self._ptr))
-        uhat_funcs = FunctionSet(basis_get_uhat(self._ptr))
+        uhat_funcs = FunctionSetFT(basis_get_uhat(self._ptr))
 
         self._s = basis_get_svals(self._ptr)
         self._u = PiecewiseLegendrePolyVector(u_funcs, 0, self._beta)
