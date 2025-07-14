@@ -1,7 +1,7 @@
 """
 High-level Python classes for FiniteTempBasis
 """
-
+from typing import Optional
 import numpy as np
 from .core import basis_new, basis_get_size, basis_get_svals, basis_get_u, basis_get_v, basis_get_uhat, basis_get_default_tau_sampling_points, basis_get_default_omega_sampling_points, basis_get_default_matsubara_sampling_points
 from .constants import STATISTICS_FERMIONIC, STATISTICS_BOSONIC
@@ -13,7 +13,7 @@ from .poly import PiecewiseLegendrePolyVector, PiecewiseLegendrePolyFTVector, Fu
 class FiniteTempBasis(AbstractBasis):
     """Finite temperature basis for intermediate representation."""
 
-    def __init__(self, statistics: str, beta: float, wmax: float, eps: float):
+    def __init__(self, statistics: str, beta: float, wmax: float, eps: float, sve_result: Optional[SVEResult] = None):
         """
         Initialize finite temperature basis.
 
@@ -40,7 +40,10 @@ class FiniteTempBasis(AbstractBasis):
             raise ValueError(f"Invalid statistics: {statistics} expected 'F' or 'B'")
 
         # Compute SVE
-        self._sve = SVEResult(self._kernel, eps)
+        if sve_result is None:
+            self._sve = SVEResult(self._kernel, eps)
+        else:
+            self._sve = sve_result
 
         # Create basis
         stats_int = STATISTICS_FERMIONIC if statistics == 'F' else STATISTICS_BOSONIC
