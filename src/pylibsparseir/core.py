@@ -125,6 +125,9 @@ def _setup_prototypes():
     ]
     _lib.spir_funcs_batch_eval_matsu.restype = c_int
 
+    _lib.spir_funcs_get_n_roots.argtypes = [spir_funcs, POINTER(c_int)]
+    _lib.spir_funcs_get_n_roots.restype = c_int
+
     _lib.spir_funcs_get_roots.argtypes = [spir_funcs, POINTER(c_double)]
     _lib.spir_funcs_get_roots.restype = c_int
 
@@ -400,9 +403,18 @@ def funcs_eval_single_complex128(funcs, x):
 
     return out
 
+def funcs_get_n_roots(funcs):
+    """Get the number of roots of the basis functions."""
+    n_roots = c_int()
+    status = _lib.spir_funcs_get_n_roots(funcs, byref(n_roots))
+    if status != COMPUTATION_SUCCESS:
+        raise RuntimeError(f"Failed to get number of roots: {status}")
+    return n_roots.value
+
 def funcs_get_roots(funcs):
     """Get the roots of the basis functions."""
-    roots = np.zeros(funcs_get_size(funcs), dtype=np.float64)
+    n_roots = funcs_get_n_roots(funcs)
+    roots = np.zeros(n_roots, dtype=np.float64)
     status = _lib.spir_funcs_get_roots(funcs, roots.ctypes.data_as(POINTER(c_double)))
     if status != COMPUTATION_SUCCESS:
         raise RuntimeError(f"Failed to get roots: {status}")
