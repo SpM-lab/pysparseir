@@ -203,14 +203,15 @@ class MatsubaraSampling:
         output_cdouble_complex = np.zeros(output_dims, dtype=c_double_complex)
         if al.dtype.kind == "f":
             status = _lib.spir_sampling_eval_dz(
-            self._ptr,
-            SPIR_ORDER_ROW_MAJOR,
-            ndim,
-            input_dims.ctypes.data_as(POINTER(c_int)),
-            axis,
-            al.ctypes.data_as(POINTER(c_double)),
-            output_cdouble_complex.ctypes.data_as(POINTER(c_double_complex))
-        )
+                self._ptr,
+                SPIR_ORDER_ROW_MAJOR,
+                ndim,
+                input_dims.ctypes.data_as(POINTER(c_int)),
+                axis,
+                al.ctypes.data_as(POINTER(c_double)),
+                output_cdouble_complex.ctypes.data_as(POINTER(c_double_complex))
+            )
+            output = output_cdouble_complex['real'] + 1j * output_cdouble_complex['imag']
         elif al.dtype.kind == "c":
             status = _lib.spir_sampling_eval_zz(
                 self._ptr,
@@ -221,14 +222,14 @@ class MatsubaraSampling:
                 al.ctypes.data_as(POINTER(c_double_complex)),
                 output_cdouble_complex.ctypes.data_as(POINTER(c_double_complex))
             )
-            output_cdouble_complex = output_cdouble_complex['real'] + 1j * output_cdouble_complex['imag']
+            output = output_cdouble_complex['real'] + 1j * output_cdouble_complex['imag']
         else:
             raise ValueError(f"Unsupported dtype: {al.dtype}")
 
         if status != COMPUTATION_SUCCESS:
             raise RuntimeError(f"Failed to evaluate sampling: {status}")
 
-        return output_cdouble_complex
+        return output
 
     def fit(self, ax, axis=0):
         """

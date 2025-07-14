@@ -146,25 +146,6 @@ class PiecewiseLegendrePoly:
         """Evaluate basis functions at given points."""
         return self._funcs(x)
 
-    def overlap(self, f):
-        """
-        Compute the overlap of the basis functions with a function.
-
-        WARNING: This is a safe fallback implementation that avoids memory issues
-        but may not be as accurate as the full roots-based integration.
-        """
-
-        xmin = self._xmin
-        xmax = self._xmax
-        roots = funcs_get_roots(self._funcs._ptr).tolist()
-        roots = [r for r in roots if r >= xmin and r <= xmax]
-        roots.append(xmax)
-        roots.append(xmin)
-        roots.sort()
-        overlap = 0.0
-        for i in range(len(roots) - 1):
-            overlap += integrate.quad(lambda x: self._funcs(x) * f(x), roots[i], roots[i+1])[0]
-        return overlap
 
 class PiecewiseLegendrePolyVector:
     """Piecewise Legendre polynomial."""
@@ -197,10 +178,13 @@ class PiecewiseLegendrePolyVector:
         roots.append(xmax)
         roots.append(xmin)
         roots.sort()
-        overlap = 0.0
-        for i in range(len(roots) - 1):
-            overlap += integrate.quad(lambda x: self._funcs(x) * f(x), roots[i], roots[i+1])[0]
-        return overlap
+
+        test_x = (xmin + xmax) / 2
+        test_out = self._funcs(test_x)
+        output = np.zeros(len(test_out))
+        for i in range(len(test_out)):
+            output[i] = integrate.quad(lambda x: self._funcs(x)[i] * f(x), roots[i], roots[i+1], epsabs=1e-10, epsrel=1e-10)[0]
+        return output
 
 
 class PiecewiseLegendrePolyFT:
