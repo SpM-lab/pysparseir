@@ -103,7 +103,7 @@ class TauSampling:
         ndim = len(ax.shape)
         input_dims = np.asarray(ax.shape, dtype=np.int32)
         output_dims = list(ax.shape)
-        output_dims[axis] = len(self.sampling_points)
+        output_dims[axis] = len(self.basis.size)
         if ax.dtype.kind == "f":
             output = np.zeros(output_dims, dtype=np.float64)
             status = _lib.spir_sampling_fit_dd(
@@ -237,7 +237,7 @@ class MatsubaraSampling:
         ndim = len(ax.shape)
         input_dims = np.asarray(ax.shape, dtype=np.int32)
         output_dims = list(ax.shape)
-        output_dims[axis] = len(self.sampling_points)
+        output_dims[axis] = len(self.basis.size)
         output = np.zeros(output_dims, dtype=c_double_complex)
 
         status = _lib.spir_sampling_fit_zz(
