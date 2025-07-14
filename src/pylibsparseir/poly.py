@@ -174,16 +174,16 @@ class PiecewiseLegendrePolyVector:
         xmin = self._xmin
         xmax = self._xmax
         roots = funcs_get_roots(self._funcs._ptr).tolist()
-        roots = [r for r in roots if r >= xmin and r <= xmax]
-        roots.append(xmax)
-        roots.append(xmin)
         roots.sort()
 
         test_x = (xmin + xmax) / 2
         test_out = self._funcs(test_x)
         output = np.zeros(len(test_out))
         for i in range(len(test_out)):
-            output[i] = integrate.quad(lambda x: self._funcs(x)[i] * f(x), roots[i], roots[i+1], epsabs=1e-10, epsrel=1e-10)[0]
+            for j in range(len(roots) - 1):
+                output[i] += integrate.quad(lambda x: self._funcs(x)[i] * f(x), roots[j], roots[j+1], epsabs=1e-10, epsrel=1e-10)[0]
+            output[i] += integrate.quad(lambda x: self._funcs(x)[i] * f(x), roots[-1], xmax, epsabs=1e-10, epsrel=1e-10)[0]
+            output[i] += integrate.quad(lambda x: self._funcs(x)[i] * f(x), xmin, roots[0], epsabs=1e-10, epsrel=1e-10)[0]
         return output
 
 

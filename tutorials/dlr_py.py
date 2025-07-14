@@ -50,7 +50,7 @@ plt.show()
 rhol = basis.v.overlap(rho)
 ls = np.arange(basis.size)
 plt.semilogy(ls[::2], np.abs(rhol)[::2], marker="x")
-plt.ylim([1e-5, None])
+
 plt.show()
 
 # %%
@@ -75,7 +75,7 @@ gl_reconst = dlr.to_IR(g_dlr)
 plt.semilogy(np.abs(gl), label="Exact", ls="", marker="+")
 plt.semilogy(np.abs(gl_reconst), label="Reconstructed from DLR", ls="", marker="x")
 plt.semilogy(np.abs(gl-gl_reconst), label="error")
-plt.ylim([1e-18,None])
+# plt.ylim([1e-18,None])
 plt.ylabel("$|g_l|$")
 plt.legend(loc="best", frameon=False)
 plt.show()
@@ -95,5 +95,3 @@ plt.xlabel(r"$\nu$")
 plt.ylabel(r"Im $G(\mathrm{i}\omega_n)$")
 
 plt.show()
-
-# %%

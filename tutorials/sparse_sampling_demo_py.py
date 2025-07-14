@@ -86,7 +86,6 @@ plt.semilogy(ls[::2], np.abs(gl_reconst_from_tau[::2]), marker="x", label="from 
 plt.semilogy(ls[::2], np.abs(gl_reconst_from_matsu[::2]), marker="+", label="from sampling frequencies")
 plt.xlabel(r"$l$")
 plt.ylabel(r"$|g_l|$")
-plt.ylim([1e-17, 10])
 plt.legend(frameon=False)
 plt.show()
 
@@ -97,3 +96,7 @@ plt.xlabel(r"$l$")
 plt.ylabel(r"Error in $g_l$")
 plt.legend()
 plt.show()
+
+# %%
+
+# %%
