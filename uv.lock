@@ -3,6 +3,19 @@ revision = 1
 requires-python = ">=3.12"
 
 [[package]]
+name = "admmsolver"
+version = "0.7.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "scipy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/78/38/3d9463df6bd6e2cd8d5d0d01be53064ca35261ea457b4819638de426c8f3/admmsolver-0.7.7.tar.gz", hash = "sha256:f3c760de46821f1d863b9d0942e7faebb4a54f9ac6861d54ced82c42f62e16d4", size = 16490 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cd/4d/1a4ec6ee5fcf324d4ed34ca973a88378d1f1b1a5c26b311d7b0f027ea3b4/admmsolver-0.7.7-py3-none-any.whl", hash = "sha256:2a10df72b38dcf8146cd8fb1f6eb84cf4bcf1d53697bb1dd261210494e333ad0", size = 13062 },
+]
+
+[[package]]
 name = "appnope"
 version = "0.1.4"
 source = { registry = "https://pypi.org/simple" }
@@ -639,6 +652,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "admmsolver" },
     { name = "ipykernel" },
     { name = "matplotlib" },
     { name = "pytest" },
@@ -652,6 +666,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "admmsolver", specifier = ">=0.7.7" },
     { name = "ipykernel", specifier = ">=6.29.5" },
     { name = "matplotlib", specifier = ">=3.10.3" },
     { name = "pytest", specifier = ">=8.4.1" },
