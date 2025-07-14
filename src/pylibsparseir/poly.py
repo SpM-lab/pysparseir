@@ -156,13 +156,14 @@ class PiecewiseLegendrePoly:
 
         xmin = self._xmin
         xmax = self._xmax
-        roots = funcs_get_roots(self._funcs._ptr)
+        roots = funcs_get_roots(self._funcs._ptr).tolist()
+        roots = [r for r in roots if r >= xmin and r <= xmax]
         roots.append(xmax)
         roots.append(xmin)
         roots.sort()
         overlap = 0.0
         for i in range(len(roots) - 1):
-            overlap += integrate.quad(lambda x: self._funcs(x) * f(x), roots[i], roots[i+1])[0] / (xmax - xmin)
+            overlap += integrate.quad(lambda x: self._funcs(x) * f(x), roots[i], roots[i+1])[0]
         return overlap
 
 class PiecewiseLegendrePolyVector:
@@ -191,13 +192,14 @@ class PiecewiseLegendrePolyVector:
 
         xmin = self._xmin
         xmax = self._xmax
-        roots = funcs_get_roots(self._funcs._ptr)
+        roots = funcs_get_roots(self._funcs._ptr).tolist()
+        roots = [r for r in roots if r >= xmin and r <= xmax]
         roots.append(xmax)
         roots.append(xmin)
         roots.sort()
         overlap = 0.0
         for i in range(len(roots) - 1):
-            overlap += integrate.quad(lambda x: self._funcs(x) * f(x), roots[i], roots[i+1])[0] / (xmax - xmin)
+            overlap += integrate.quad(lambda x: self._funcs(x) * f(x), roots[i], roots[i+1])[0]
         return overlap
 
 
