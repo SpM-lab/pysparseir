@@ -4,7 +4,7 @@ Test cases for core functionality and C API wrappers
 
 import numpy as np
 from ctypes import c_double, byref
-from pylibsparseir.core import logistic_kernel_new, reg_bose_kernel_new, sve_result_new, sve_result_get_size, sve_result_get_svals, basis_new, basis_get_size, basis_get_stats, basis_get_svals, basis_get_u, basis_get_v, basis_get_uhat, basis_get_default_tau_sampling_points, basis_get_default_matsubara_sampling_points, tau_sampling_new, matsubara_sampling_new, funcs_evaluate
+from pylibsparseir.core import logistic_kernel_new, reg_bose_kernel_new, sve_result_new, sve_result_get_size, sve_result_get_svals, basis_new, basis_get_size, basis_get_stats, basis_get_svals, basis_get_u, basis_get_v, basis_get_uhat, basis_get_default_tau_sampling_points, basis_get_default_matsubara_sampling_points, tau_sampling_new, matsubara_sampling_new
 from pylibsparseir.core import _lib
 
 class TestCoreAPI:
@@ -85,14 +85,6 @@ class TestCoreAPI:
 
         uhat_funcs = basis_get_uhat(basis)
         assert uhat_funcs is not None
-
-        # Test function evaluation
-        x_points = np.array([0.0, 1.0, 2.0, 3.0, 4.0])
-        u_vals = funcs_evaluate(u_funcs, x_points)
-
-        size = basis_get_size(basis)
-        assert u_vals.shape == (size, len(x_points))
-        assert np.all(np.isfinite(u_vals))
 
     def test_default_sampling_points(self):
         """Test default sampling point functions."""

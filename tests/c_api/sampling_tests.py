@@ -14,9 +14,7 @@ from pylibsparseir.core import (
     _lib,
     logistic_kernel_new, reg_bose_kernel_new,
     sve_result_new, basis_new,
-    tau_sampling_new, matsubara_sampling_new,
-    basis_get_default_tau_sampling_points,
-    basis_get_default_matsubara_sampling_points,
+    c_double_complex,
     COMPUTATION_SUCCESS
 )
 from pylibsparseir.ctypes_wrapper import *
@@ -393,8 +391,8 @@ class TestSamplingEvaluationComplex:
             ndim,
             dims.ctypes.data_as(POINTER(c_int)),
             target_dim,
-            coeffs_complex.ctypes.data_as(POINTER(c_double)),
-            evaluate_output.ctypes.data_as(POINTER(c_double))
+            coeffs_complex.ctypes.data_as(POINTER(c_double_complex)),
+            evaluate_output.ctypes.data_as(POINTER(c_double_complex))
         )
         assert evaluate_status == COMPUTATION_SUCCESS
 
@@ -405,8 +403,8 @@ class TestSamplingEvaluationComplex:
             ndim,
             dims.ctypes.data_as(POINTER(c_int)),
             target_dim,
-            evaluate_output.ctypes.data_as(POINTER(c_double)),
-            fit_output.ctypes.data_as(POINTER(c_double))
+            evaluate_output.ctypes.data_as(POINTER(c_double_complex)),
+            fit_output.ctypes.data_as(POINTER(c_double_complex))
         )
 
         # For bosonic systems, complex Matsubara sampling might have different constraints
@@ -501,8 +499,8 @@ class TestAdvanced4DComplexSampling:
                 ndim,
                 np.array(dims, dtype=np.int32).ctypes.data_as(POINTER(c_int)),
                 target_dim,
-                coeffs_complex.ctypes.data_as(POINTER(c_double)),
-                evaluate_output.ctypes.data_as(POINTER(c_double))
+                coeffs_complex.ctypes.data_as(POINTER(c_double_complex)),
+                evaluate_output.ctypes.data_as(POINTER(c_double_complex))
             )
             assert evaluate_status == COMPUTATION_SUCCESS
 
@@ -514,8 +512,8 @@ class TestAdvanced4DComplexSampling:
                 ndim,
                 np.array(output_dims, dtype=np.int32).ctypes.data_as(POINTER(c_int)),
                 target_dim,
-                evaluate_output.ctypes.data_as(POINTER(c_double)),
-                fit_output.ctypes.data_as(POINTER(c_double))
+                evaluate_output.ctypes.data_as(POINTER(c_double_complex)),
+                fit_output.ctypes.data_as(POINTER(c_double_complex))
             )
             assert fit_status == COMPUTATION_SUCCESS
 
@@ -600,8 +598,8 @@ class TestAdvanced4DComplexSampling:
                 ndim,
                 np.array(dims, dtype=np.int32).ctypes.data_as(POINTER(c_int)),
                 target_dim,
-                coeffs_complex.ctypes.data_as(POINTER(c_double)),
-                evaluate_output.ctypes.data_as(POINTER(c_double))
+                coeffs_complex.ctypes.data_as(POINTER(c_double_complex)),
+                evaluate_output.ctypes.data_as(POINTER(c_double_complex))
             )
             assert evaluate_status == COMPUTATION_SUCCESS
 
@@ -613,8 +611,8 @@ class TestAdvanced4DComplexSampling:
                 ndim,
                 np.array(output_dims, dtype=np.int32).ctypes.data_as(POINTER(c_int)),
                 target_dim,
-                evaluate_output.ctypes.data_as(POINTER(c_double)),
-                fit_output.ctypes.data_as(POINTER(c_double))
+                evaluate_output.ctypes.data_as(POINTER(c_double_complex)),
+                fit_output.ctypes.data_as(POINTER(c_double_complex))
             )
             assert fit_status == COMPUTATION_SUCCESS
 
