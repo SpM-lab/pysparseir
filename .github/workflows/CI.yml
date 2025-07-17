@@ -33,6 +33,9 @@ jobs:
         with:
           enable-cache: true
 
+      - name: Uv sync
+        run: uv sync
+
       - name: Run tests
         # For example, using `pytest`
         run: uv run pytest tests
