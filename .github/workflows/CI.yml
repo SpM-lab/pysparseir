@@ -1,5 +1,11 @@
 name: Example
 
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
 jobs:
   uv-example:
     name: python
