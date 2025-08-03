@@ -1,5 +1,7 @@
 # pysparseir
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SpM-lab/pysparseir)
+
 Python bindings for the [libsparseir](https://github.com/SpM-lab/libsparseir) library, providing efficient sparse intermediate representation for many-body physics calculations.
 
 ## Overview
