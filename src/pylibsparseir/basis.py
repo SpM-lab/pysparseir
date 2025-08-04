@@ -13,7 +13,7 @@ from .poly import PiecewiseLegendrePolyVector, PiecewiseLegendrePolyFTVector, Fu
 class FiniteTempBasis(AbstractBasis):
     """Finite temperature basis for intermediate representation."""
 
-    def __init__(self, statistics: str, beta: float, wmax: float, eps: float, sve_result: Optional[SVEResult] = None):
+    def __init__(self, statistics: str, beta: float, wmax: float, eps: float, sve_result: Optional[SVEResult] = None, max_size: int =-1):
         """
         Initialize finite temperature basis.
 
@@ -47,7 +47,7 @@ class FiniteTempBasis(AbstractBasis):
 
         # Create basis
         stats_int = STATISTICS_FERMIONIC if statistics == 'F' else STATISTICS_BOSONIC
-        self._ptr = basis_new(stats_int, self._beta, self._wmax, self._kernel._ptr, self._sve._ptr)
+        self._ptr = basis_new(stats_int, self._beta, self._wmax, self._kernel._ptr, max_size, self._sve._ptr)
 
         u_funcs = FunctionSet(basis_get_u(self._ptr))
         v_funcs = FunctionSet(basis_get_v(self._ptr))
