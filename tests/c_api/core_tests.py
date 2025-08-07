@@ -57,7 +57,11 @@ class TestCAPICoreFixed:
         assert status.value == COMPUTATION_SUCCESS
 
         # Compute SVE
-        sve = _lib.spir_sve_result_new(kernel, c_double(1e-6), byref(status))
+        cutoff = -1.0
+        lmax = -1
+        n_gauss = -1
+        Twork = SPIR_TWORK_FLOAT64X2
+        sve = _lib.spir_sve_result_new(kernel, c_double(1e-6), c_double(cutoff), c_int(lmax), c_int(n_gauss), c_int(Twork), byref(status))
         assert status.value == COMPUTATION_SUCCESS
         assert sve is not None
 
@@ -136,9 +140,14 @@ class TestCAPICoreFixed:
 
         # Create basis
         kernel = _lib.spir_logistic_kernel_new(c_double(beta * wmax), byref(status))
-        sve = _lib.spir_sve_result_new(kernel, c_double(1e-10), byref(status))
+        cutoff = -1.0
+        lmax = -1
+        n_gauss = -1
+        Twork = SPIR_TWORK_FLOAT64X2
+        max_size = -1
+        sve = _lib.spir_sve_result_new(kernel, c_double(1e-10), c_double(cutoff), c_int(lmax), c_int(n_gauss), c_int(Twork), byref(status))
         basis = _lib.spir_basis_new(c_int(STATISTICS_FERMIONIC), c_double(beta),
-                                   c_double(wmax), kernel, sve, byref(status))
+                                   c_double(wmax), kernel, sve, max_size, byref(status))
 
         # Get default tau points
         n_tau = c_int()
@@ -173,12 +182,17 @@ class TestCAPICoreFixed:
         status = c_int()
         beta = 10.0
         wmax = 1.0
+        max_size = -1
 
         # Create basis
         kernel = _lib.spir_logistic_kernel_new(c_double(beta * wmax), byref(status))
-        sve = _lib.spir_sve_result_new(kernel, c_double(1e-10), byref(status))
+        cutoff = -1.0
+        lmax = -1
+        n_gauss = -1
+        Twork = SPIR_TWORK_FLOAT64X2
+        sve = _lib.spir_sve_result_new(kernel, c_double(1e-10), c_double(cutoff), c_int(lmax), c_int(n_gauss), c_int(Twork), byref(status))
         basis = _lib.spir_basis_new(c_int(STATISTICS_FERMIONIC), c_double(beta),
-                                   c_double(wmax), kernel, sve, byref(status))
+                                   c_double(wmax), kernel, sve, max_size, byref(status))
 
         # Get default Matsubara points
         n_matsu = c_int()
@@ -212,9 +226,14 @@ class TestCAPICoreFixed:
 
         # Create basis
         kernel = _lib.spir_logistic_kernel_new(c_double(beta * wmax), byref(status))
-        sve = _lib.spir_sve_result_new(kernel, c_double(1e-10), byref(status))
+        cutoff = -1.0
+        lmax = -1
+        n_gauss = -1
+        Twork = SPIR_TWORK_FLOAT64X2
+        max_size = -1
+        sve = _lib.spir_sve_result_new(kernel, c_double(1e-10), c_double(cutoff), c_int(lmax), c_int(n_gauss), c_int(Twork), byref(status))
         basis = _lib.spir_basis_new(c_int(STATISTICS_FERMIONIC), c_double(beta),
-                                   c_double(wmax), kernel, sve, byref(status))
+                                   c_double(wmax), kernel, sve, max_size, byref(status))
 
         # Get u functions
         u_funcs = _lib.spir_basis_get_u(basis, byref(status))
@@ -239,9 +258,13 @@ class TestCAPICoreFixed:
 
         # Create full setup
         kernel = _lib.spir_logistic_kernel_new(c_double(10.0), byref(status))
-        sve = _lib.spir_sve_result_new(kernel, c_double(1e-10), byref(status))
+        cutoff = -1.0
+        lmax = -1
+        n_gauss = -1
+        Twork = SPIR_TWORK_FLOAT64X2
+        sve = _lib.spir_sve_result_new(kernel, c_double(1e-10), c_double(cutoff), c_int(lmax), c_int(n_gauss), c_int(Twork), byref(status))
         basis = _lib.spir_basis_new(c_int(STATISTICS_FERMIONIC), c_double(10.0),
-                                   c_double(1.0), kernel, sve, byref(status))
+                                   c_double(1.0), kernel, sve, -1, byref(status))
 
         u_funcs = _lib.spir_basis_get_u(basis, byref(status))
 
@@ -270,21 +293,25 @@ class TestBasisFunctionEvaluation:
     def _spir_basis_new(self, statistics, beta, wmax, epsilon):
         """Helper function equivalent to C++ _spir_basis_new"""
         status = c_int()
-
+        max_size = c_int(-1)
         # Create logistic kernel
         kernel = _lib.spir_logistic_kernel_new(c_double(beta * wmax), byref(status))
         if status.value != COMPUTATION_SUCCESS or kernel is None:
             return None, status.value
 
         # Create SVE result
-        sve = _lib.spir_sve_result_new(kernel, c_double(epsilon), byref(status))
+        cutoff = -1.0
+        lmax = -1
+        n_gauss = -1
+        Twork = SPIR_TWORK_FLOAT64X2
+        sve = _lib.spir_sve_result_new(kernel, c_double(epsilon), c_double(cutoff), c_int(lmax), c_int(n_gauss), c_int(Twork), byref(status))
         if status.value != COMPUTATION_SUCCESS or sve is None:
             _lib.spir_kernel_release(kernel)
             return None, status.value
 
         # Create basis
         basis = _lib.spir_basis_new(c_int(statistics), c_double(beta), c_double(wmax),
-                                   kernel, sve, byref(status))
+                                   kernel, sve, max_size, byref(status))
         if status.value != COMPUTATION_SUCCESS or basis is None:
             _lib.spir_sve_result_release(sve)
             _lib.spir_kernel_release(kernel)
@@ -449,15 +476,20 @@ class TestBasisFunctionEvaluation:
                 assert kernel is not None
 
                 # Create SVE result
+                cutoff = -1.0
+                lmax = -1
+                n_gauss = -1
+                Twork = SPIR_TWORK_FLOAT64X2
                 sve_status = c_int()
-                sve_result = _lib.spir_sve_result_new(kernel, c_double(epsilon), byref(sve_status))
+                sve_result = _lib.spir_sve_result_new(kernel, c_double(epsilon), c_double(cutoff), c_int(lmax), c_int(n_gauss), c_int(Twork), byref(sve_status))
                 assert sve_status.value == COMPUTATION_SUCCESS
                 assert sve_result is not None
 
                 # Create basis with SVE
+                max_size = -1
                 basis_status = c_int()
                 basis = _lib.spir_basis_new(c_int(statistics), c_double(beta), c_double(wmax),
-                                          kernel, sve_result, byref(basis_status))
+                                          kernel, sve_result, max_size, byref(basis_status))
                 assert basis_status.value == COMPUTATION_SUCCESS
                 assert basis is not None
 

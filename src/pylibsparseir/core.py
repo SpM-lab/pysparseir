@@ -304,7 +304,7 @@ def basis_new(statistics, beta, omega_max, kernel, sve, max_size):
     """Create a new basis."""
     status = c_int()
     basis = _lib.spir_basis_new(
-        statistics, beta, omega_max, kernel, sve, c_int(max_size), byref(status)
+        statistics, beta, omega_max, kernel, sve, max_size, byref(status)
     )
     if status.value != COMPUTATION_SUCCESS:
         raise RuntimeError(f"Failed to create basis: {status.value}")
