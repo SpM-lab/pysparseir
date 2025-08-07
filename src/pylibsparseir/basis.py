@@ -47,7 +47,7 @@ class FiniteTempBasis(AbstractBasis):
 
         # Create basis
         stats_int = STATISTICS_FERMIONIC if statistics == 'F' else STATISTICS_BOSONIC
-        self._ptr = basis_new(stats_int, self._beta, self._wmax, self._kernel._ptr, max_size, self._sve._ptr)
+        self._ptr = basis_new(stats_int, self._beta, self._wmax, self._kernel._ptr, self._sve._ptr, max_size)
 
         u_funcs = FunctionSet(basis_get_u(self._ptr))
         v_funcs = FunctionSet(basis_get_v(self._ptr))

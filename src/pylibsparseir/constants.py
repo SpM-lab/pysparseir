@@ -32,4 +32,8 @@ ORDER_ROW_MAJOR = 0
 
 # Make sure these are available at module level
 SPIR_ORDER_ROW_MAJOR = 0
-SPIR_ORDER_COLUMN_MAJOR = 1 
+SPIR_ORDER_COLUMN_MAJOR = 1
+
+# SVE Twork constants
+SPIR_TWORK_FLOAT64 = 0
+SPIR_TWORK_FLOAT64X2 = 1
