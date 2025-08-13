@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 import numpy as np
 
-from pylibsparseir import FiniteTempBasisSet,\
+from sparse_ir import FiniteTempBasisSet,\
     TauSampling, MatsubaraSampling, finite_temp_bases
 
 

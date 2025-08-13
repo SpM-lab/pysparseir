@@ -4,7 +4,7 @@ Test cases for SVE and basis accuracy, following sparse-ir test patterns.
 
 import pytest
 import numpy as np
-import pylibsparseir
+import sparse_ir
 from .conftest import BASIS_PARAMS
 
 
@@ -15,7 +15,7 @@ class TestSVEAccuracy:
     def test_accuracy_bounds(self, stat, beta, wmax):
         """Test that basis accuracy meets expected bounds."""
         eps = 1e-6
-        basis = pylibsparseir.FiniteTempBasis(stat, beta, wmax, eps)
+        basis = sparse_ir.FiniteTempBasis(stat, beta, wmax, eps)
 
         # Basic properties
         assert 0 < basis.accuracy <= basis.significance[-1]
@@ -28,7 +28,7 @@ class TestSVEAccuracy:
     @pytest.mark.parametrize("stat,beta,wmax", BASIS_PARAMS)
     def test_singular_value_properties(self, stat, beta, wmax):
         """Test singular value properties."""
-        basis = pylibsparseir.FiniteTempBasis(stat, beta, wmax, 1e-6)
+        basis = sparse_ir.FiniteTempBasis(stat, beta, wmax, 1e-6)
 
         s = basis.s
 
@@ -56,7 +56,7 @@ class TestSVEAccuracy:
         wmax = lambda_ / beta
         eps = 1e-6
 
-        basis = pylibsparseir.FiniteTempBasis('F', beta, wmax, eps)
+        basis = sparse_ir.FiniteTempBasis('F', beta, wmax, eps)
 
         # Basis size should be reasonable for the given Lambda
         # The exact scaling depends on the kernel and implementation
@@ -70,9 +70,9 @@ class TestSVEAccuracy:
         """Test that smaller epsilon gives larger basis size."""
         beta, wmax = 1.0, 42.0
 
-        basis_loose = pylibsparseir.FiniteTempBasis('F', beta, wmax, 1e-4)
-        basis_medium = pylibsparseir.FiniteTempBasis('F', beta, wmax, 1e-6)
-        basis_tight = pylibsparseir.FiniteTempBasis('F', beta, wmax, 1e-8)
+        basis_loose = sparse_ir.FiniteTempBasis('F', beta, wmax, 1e-4)
+        basis_medium = sparse_ir.FiniteTempBasis('F', beta, wmax, 1e-6)
+        basis_tight = sparse_ir.FiniteTempBasis('F', beta, wmax, 1e-8)
 
         # Sizes should increase (or stay same) as epsilon decreases
         assert basis_loose.size <= basis_medium.size <= basis_tight.size, \
@@ -81,7 +81,7 @@ class TestSVEAccuracy:
     @pytest.mark.parametrize("stat", ['F', 'B'])
     def test_statistics_consistency(self, stat):
         """Test that basis statistics are consistent."""
-        basis = pylibsparseir.FiniteTempBasis(stat, 1.0, 10.0, 1e-6)
+        basis = sparse_ir.FiniteTempBasis(stat, 1.0, 10.0, 1e-6)
 
         assert basis.statistics == stat
 
@@ -96,8 +96,8 @@ class TestBasisConsistency:
         """Test that same parameters give same results."""
         params = ('F', 2.0, 15.0, 1e-6)
 
-        basis1 = pylibsparseir.FiniteTempBasis(*params)
-        basis2 = pylibsparseir.FiniteTempBasis(*params)
+        basis1 = sparse_ir.FiniteTempBasis(*params)
+        basis2 = sparse_ir.FiniteTempBasis(*params)
 
         # Should have identical properties
         assert basis1.size == basis2.size
@@ -112,7 +112,7 @@ class TestBasisConsistency:
         """Test finite_temp_bases factory function."""
         beta, wmax, eps = 2.0, 20.0, 1e-6
 
-        f_basis, b_basis = pylibsparseir.finite_temp_bases(beta, wmax, eps)
+        f_basis, b_basis = sparse_ir.finite_temp_bases(beta, wmax, eps)
 
         # Check types
         assert f_basis.statistics == 'F'

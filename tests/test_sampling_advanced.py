@@ -4,7 +4,7 @@ Advanced sampling tests following sparse-ir patterns, including noise tests.
 
 import pytest
 import numpy as np
-import pylibsparseir
+import sparse_ir
 from .conftest import BASIS_PARAMS
 
 
@@ -15,8 +15,8 @@ class TestTauSamplingAccuracy:
     def test_tau_noise_tolerance(self, stat, beta, wmax, rng):
         """Test tau sampling noise tolerance following sparse-ir pattern."""
         eps = 1e-6
-        basis = pylibsparseir.FiniteTempBasis(stat, beta, wmax, eps)
-        smpl = pylibsparseir.TauSampling(basis)
+        basis = sparse_ir.FiniteTempBasis(stat, beta, wmax, eps)
+        smpl = sparse_ir.TauSampling(basis)
 
         # Create test coefficients using basis functions
         # This follows the sparse-ir pattern: rhol = basis.v([-.999, -.01, .5]) @ [0.8, -.2, 0.5]
@@ -51,8 +51,8 @@ class TestTauSamplingAccuracy:
 
     def test_tau_perfect_roundtrip(self):
         """Test perfect roundtrip without noise."""
-        basis = pylibsparseir.FiniteTempBasis('F', 1.0, 10.0, 1e-6)
-        smpl = pylibsparseir.TauSampling(basis)
+        basis = sparse_ir.FiniteTempBasis('F', 1.0, 10.0, 1e-6)
+        smpl = sparse_ir.TauSampling(basis)
 
         # Test with different coefficient patterns
         test_coefficients = [
@@ -70,8 +70,8 @@ class TestTauSamplingAccuracy:
 
     def test_tau_sampling_matrix_properties(self):
         """Test properties of the tau sampling matrix."""
-        basis = pylibsparseir.FiniteTempBasis('F', 2.0, 10.0, 1e-6)
-        smpl = pylibsparseir.TauSampling(basis)
+        basis = sparse_ir.FiniteTempBasis('F', 2.0, 10.0, 1e-6)
+        smpl = sparse_ir.TauSampling(basis)
 
         # The sampling should be well-conditioned for default points
         # We can't directly access the condition number yet, but we can test
@@ -95,14 +95,14 @@ class TestMatsubaraSamplingBasic:
 
     def test_matsubara_creation_simple(self):
         """Test basic Matsubara sampling creation."""
-        basis = pylibsparseir.FiniteTempBasis('F', 1.0, 10.0, 1e-6)
+        basis = sparse_ir.FiniteTempBasis('F', 1.0, 10.0, 1e-6)
 
         # This might fail due to current implementation issues
         # But let's test what we can
         try:
             # Test with very simple custom points
             simple_points = np.array([1, 3], dtype=np.int64)
-            smpl = pylibsparseir.MatsubaraSampling(basis, sampling_points=simple_points)
+            smpl = sparse_ir.MatsubaraSampling(basis, sampling_points=simple_points)
 
             assert len(smpl.wn) == 2
             np.testing.assert_array_equal(smpl.wn, simple_points)
@@ -118,14 +118,14 @@ class TestSamplingEdgeCases:
 
     def test_out_of_bounds_tau(self):
         """Test tau points outside [0, beta] range."""
-        basis = pylibsparseir.FiniteTempBasis('F', 1.0, 10.0, 1e-6)
+        basis = sparse_ir.FiniteTempBasis('F', 1.0, 10.0, 1e-6)
 
         # The C++ library enforces tau to be within [0, beta]
         # Test that out-of-bounds points raise an error
         out_of_bounds_points = np.array([-0.5, 1.5])  # beta = 1.0
 
         # Creating sampling with out-of-bounds points is allowed
-        smpl = pylibsparseir.TauSampling(basis, out_of_bounds_points)
+        smpl = sparse_ir.TauSampling(basis, out_of_bounds_points)
         assert len(smpl.tau) == 2
         np.testing.assert_array_equal(smpl.tau, out_of_bounds_points)
 
@@ -139,8 +139,8 @@ class TestSamplingEdgeCases:
     @pytest.mark.parametrize("stat", ['F', 'B'])
     def test_different_statistics(self, stat):
         """Test sampling works for both fermions and bosons."""
-        basis = pylibsparseir.FiniteTempBasis(stat, 1.0, 10.0, 1e-6)
-        smpl = pylibsparseir.TauSampling(basis)
+        basis = sparse_ir.FiniteTempBasis(stat, 1.0, 10.0, 1e-6)
+        smpl = sparse_ir.TauSampling(basis)
 
         # Basic operations should work for both statistics
         assert len(smpl.tau) == basis.size

@@ -2,9 +2,8 @@
 Test cases for FiniteTempBasis functionality
 """
 
-import pytest
 import numpy as np
-import pylibsparseir
+import sparse_ir
 
 
 class TestFiniteTempBasis:
@@ -17,7 +16,7 @@ class TestFiniteTempBasis:
         eps = 1e-6
 
         # Test fermion basis
-        basis_f = pylibsparseir.FiniteTempBasis('F', beta, wmax, eps)
+        basis_f = sparse_ir.FiniteTempBasis('F', beta, wmax, eps)
         assert basis_f.statistics == 'F'
         assert basis_f.beta == beta
         assert basis_f.wmax == wmax
@@ -26,14 +25,14 @@ class TestFiniteTempBasis:
         assert len(basis_f.s) == basis_f.size
 
         # Test boson basis
-        basis_b = pylibsparseir.FiniteTempBasis('B', beta, wmax, eps)
+        basis_b = sparse_ir.FiniteTempBasis('B', beta, wmax, eps)
         assert basis_b.statistics == 'B'
         assert basis_b.beta == beta
         assert basis_b.wmax == wmax
 
     def test_singular_values(self):
         """Test singular values properties."""
-        basis = pylibsparseir.FiniteTempBasis('F', 10.0, 8.0, 1e-6)
+        basis = sparse_ir.FiniteTempBasis('F', 10.0, 8.0, 1e-6)
 
         # Singular values should be positive and decreasing
         s = basis.s
@@ -51,7 +50,7 @@ class TestFiniteTempBasis:
 
     def test_basis_function_evaluation(self):
         """Test basis function evaluation."""
-        basis = pylibsparseir.FiniteTempBasis('F', 10.0, 8.0, 1e-6)
+        basis = sparse_ir.FiniteTempBasis('F', 10.0, 8.0, 1e-6)
 
         # Test u functions (imaginary time)
         tau_points = np.linspace(0, basis.beta, 5)
@@ -74,7 +73,7 @@ class TestFiniteTempBasis:
 
     def test_default_sampling_points(self):
         """Test default sampling points."""
-        basis = pylibsparseir.FiniteTempBasis('F', 10.0, 8.0, 1e-6)
+        basis = sparse_ir.FiniteTempBasis('F', 10.0, 8.0, 1e-6)
 
         # Test tau sampling points
         tau_points = basis.default_tau_sampling_points()
@@ -94,7 +93,7 @@ class TestFiniteTempBasis:
 
     def test_repr(self):
         """Test string representation."""
-        basis = pylibsparseir.FiniteTempBasis('F', 10.0, 8.0, 1e-6)
+        basis = sparse_ir.FiniteTempBasis('F', 10.0, 8.0, 1e-6)
         repr_str = repr(basis)
         assert 'FiniteTempBasis' in repr_str
         assert 'F' in repr_str
@@ -108,7 +107,7 @@ def test_finite_temp_bases():
     wmax = 4.0
     eps = 1e-8
 
-    f_basis, b_basis = pylibsparseir.finite_temp_bases(beta, wmax, eps)
+    f_basis, b_basis = sparse_ir.finite_temp_bases(beta, wmax, eps)
 
     assert f_basis.statistics == 'F'
     assert b_basis.statistics == 'B'
@@ -121,7 +120,7 @@ class TestBasisFunctionEvaluation:
     """Test basis function evaluation accuracy."""
     def test_u_function_finite(self):
         """Test that u functions evaluate to finite values."""
-        basis = pylibsparseir.FiniteTempBasis('F', 1.0, 10.0, 1e-6)
+        basis = sparse_ir.FiniteTempBasis('F', 1.0, 10.0, 1e-6)
 
         # Test at various tau points
         tau_points = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
@@ -135,7 +134,7 @@ class TestBasisFunctionEvaluation:
 
     def test_v_function_finite(self):
         """Test that v functions evaluate to finite values."""
-        basis = pylibsparseir.FiniteTempBasis('F', 1.0, 10.0, 1e-6)
+        basis = sparse_ir.FiniteTempBasis('F', 1.0, 10.0, 1e-6)
 
         # Test at various omega points
         omega_points = np.linspace(-8, 8, 9)
