@@ -3,8 +3,8 @@ High-level Python classes for FiniteTempBasis
 """
 from typing import Optional
 import numpy as np
-from .core import basis_new, basis_get_size, basis_get_svals, basis_get_u, basis_get_v, basis_get_uhat, basis_get_default_tau_sampling_points, basis_get_default_omega_sampling_points, basis_get_default_matsubara_sampling_points
-from .constants import STATISTICS_FERMIONIC, STATISTICS_BOSONIC
+from pylibsparseir.core import basis_new, basis_get_size, basis_get_svals, basis_get_u, basis_get_v, basis_get_uhat, basis_get_default_tau_sampling_points, basis_get_default_omega_sampling_points, basis_get_default_matsubara_sampling_points
+from pylibsparseir.constants import STATISTICS_FERMIONIC, STATISTICS_BOSONIC
 from .kernel import LogisticKernel
 from .abstract import AbstractBasis
 from .sve import SVEResult
@@ -137,7 +137,7 @@ class FiniteTempBasis(AbstractBasis):
         ndarray
             Default omega sampling points
         """
-        from .core import basis_get_default_omega_sampling_points
+        from pylibsparseir.core import basis_get_default_omega_sampling_points
         return basis_get_default_omega_sampling_points(self._ptr)
 
     def default_matsubara_sampling_points(self, npoints=None, positive_only=False):

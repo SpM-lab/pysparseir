@@ -1,7 +1,7 @@
 # Copyright (C) 2020-2022 Markus Wallerberger, Hiroshi Shinaoka, and others
 # SPDX-License-Identifier: MIT
-from pylibsparseir import DiscreteLehmannRepresentation
-from pylibsparseir import FiniteTempBasis, MatsubaraSampling, TauSampling, LogisticKernel, SVEResult
+from sparse_ir import DiscreteLehmannRepresentation
+from sparse_ir import FiniteTempBasis, MatsubaraSampling, TauSampling
 import numpy as np
 import pytest
 

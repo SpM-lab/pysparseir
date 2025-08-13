@@ -7,7 +7,7 @@ import numpy as np
 import pylibsparseir
 from pylibsparseir.core import *
 from .conftest import KERNEL_LAMBDAS
-from pylibsparseir.kernel import LogisticKernel, RegularizedBoseKernel
+from sparse_ir.kernel import LogisticKernel, RegularizedBoseKernel
 
 class TestSVEProperties:
     """Test SVE computation and properties."""

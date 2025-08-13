@@ -4,7 +4,7 @@ Test cases for sampling functionality
 
 import pytest
 import numpy as np
-import pylibsparseir
+import sparse_ir
 
 
 class TestTauSampling:
@@ -13,11 +13,11 @@ class TestTauSampling:
     @pytest.fixture
     def basis(self):
         """Create a test basis."""
-        return pylibsparseir.FiniteTempBasis('F', 10.0, 8.0, 1e-6)
+        return sparse_ir.FiniteTempBasis('F', 10.0, 8.0, 1e-6)
 
     def test_creation_default_points(self, basis):
         """Test TauSampling creation with default points."""
-        sampling = pylibsparseir.TauSampling(basis)
+        sampling = sparse_ir.TauSampling(basis)
 
         assert len(sampling.tau) == basis.size
         # Note: tau points can extend beyond [0, beta] for numerical reasons
@@ -26,14 +26,14 @@ class TestTauSampling:
     def test_creation_custom_points(self, basis):
         """Test TauSampling creation with custom points."""
         custom_points = np.linspace(0, basis.beta, 10)
-        sampling = pylibsparseir.TauSampling(basis, custom_points)
+        sampling = sparse_ir.TauSampling(basis, custom_points)
 
         assert len(sampling.tau) == 10
         np.testing.assert_array_almost_equal(sampling.tau, custom_points)
 
     def test_evaluate_fit_roundtrip(self, basis):
         """Test evaluate/fit roundtrip accuracy."""
-        sampling = pylibsparseir.TauSampling(basis)
+        sampling = sparse_ir.TauSampling(basis)
 
         # Test with different coefficient patterns
         test_cases = [
@@ -53,7 +53,7 @@ class TestTauSampling:
 
     def test_evaluate_shape(self, basis):
         """Test evaluate output shape."""
-        sampling = pylibsparseir.TauSampling(basis)
+        sampling = sparse_ir.TauSampling(basis)
 
         al = np.ones(basis.size)
         ax = sampling.evaluate(al)
@@ -63,7 +63,7 @@ class TestTauSampling:
 
     def test_fit_shape(self, basis):
         """Test fit output shape."""
-        sampling = pylibsparseir.TauSampling(basis)
+        sampling = sparse_ir.TauSampling(basis)
 
         ax = np.ones(len(sampling.tau))
         al = sampling.fit(ax)
@@ -73,7 +73,7 @@ class TestTauSampling:
 
     def test_repr(self, basis):
         """Test string representation."""
-        sampling = pylibsparseir.TauSampling(basis)
+        sampling = sparse_ir.TauSampling(basis)
         repr_str = repr(sampling)
         assert 'TauSampling' in repr_str
         assert str(len(sampling.tau)) in repr_str
@@ -85,12 +85,12 @@ class TestMatsubaraSampling:
     @pytest.fixture
     def basis(self):
         """Create a test basis."""
-        return pylibsparseir.FiniteTempBasis('F', 10.0, 8.0, 1e-6)
+        return sparse_ir.FiniteTempBasis('F', 10.0, 8.0, 1e-6)
 
     def test_creation_default_points(self, basis):
         """Test MatsubaraSampling creation with default points."""
         # MatsubaraSampling creation works fine
-        sampling = pylibsparseir.MatsubaraSampling(basis)
+        sampling = sparse_ir.MatsubaraSampling(basis)
 
         # Check that we have sampling points
         assert hasattr(sampling, 'wn')
@@ -104,14 +104,14 @@ class TestMatsubaraSampling:
         """Test MatsubaraSampling creation with custom points."""
         # Custom points for fermionic frequencies (odd integers)
         custom_wn = np.array([1, 3, 5, 7, 9], dtype=np.int64)
-        sampling = pylibsparseir.MatsubaraSampling(basis, custom_wn)
+        sampling = sparse_ir.MatsubaraSampling(basis, custom_wn)
 
         assert len(sampling.wn) == len(custom_wn)
         np.testing.assert_array_equal(sampling.wn, custom_wn)
 
     def test_repr(self, basis):
         """Test string representation."""
-        sampling = pylibsparseir.MatsubaraSampling(basis)
+        sampling = sparse_ir.MatsubaraSampling(basis)
         repr_str = repr(sampling)
         assert 'MatsubaraSampling' in repr_str
         assert str(len(sampling.wn)) in repr_str

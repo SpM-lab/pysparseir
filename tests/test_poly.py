@@ -1,13 +1,11 @@
-import importlib
 import numpy as np
-import pylibsparseir
-importlib.reload(pylibsparseir)
+import sparse_ir
 
 def test_poly():
     eps = 1e-6
     beta = 4.2
     wmax = 10
-    basis = pylibsparseir.FiniteTempBasis('F', beta, wmax, eps)
+    basis = sparse_ir.FiniteTempBasis('F', beta, wmax, eps)
 
     u1 = basis.u[1]
     assert np.allclose(u1(np.array([0.5, 0.3, 1.0, 2.0])), np.array([-0.43049722, -0.67225263, -0.18450157, -0.01225698]))
@@ -17,7 +15,7 @@ def test_poly_v():
     beta = 2
     wmax = 21
     eps = 1e-7
-    basis_b = pylibsparseir.FiniteTempBasis("B", beta, wmax, eps=eps)
+    basis_b = sparse_ir.FiniteTempBasis("B", beta, wmax, eps=eps)
 
     omega_p = np.array([2.2, -1.0])
     o = basis_b.v(omega_p)

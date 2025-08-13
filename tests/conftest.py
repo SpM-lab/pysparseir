@@ -9,7 +9,7 @@ import pytest
 import numpy as np
 import pylibsparseir
 
-from pylibsparseir.kernel import LogisticKernel, RegularizedBoseKernel
+from sparse_ir.kernel import LogisticKernel, RegularizedBoseKernel
 
 @pytest.fixture(scope="session")
 def sve_logistic():

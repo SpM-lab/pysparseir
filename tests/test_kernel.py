@@ -5,7 +5,7 @@ Test cases for kernel functionality, following sparse-ir test patterns.
 import pytest
 import numpy as np
 import pylibsparseir
-from pylibsparseir.kernel import LogisticKernel, RegularizedBoseKernel, kernel_domain
+from sparse_ir.kernel import LogisticKernel, RegularizedBoseKernel, kernel_domain
 from .conftest import KERNEL_LAMBDAS
 
 
