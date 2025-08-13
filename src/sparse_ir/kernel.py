@@ -8,10 +8,10 @@ import ctypes
 from ctypes import c_int, c_double, byref
 import numpy as np
 
-from .core import _lib
-from .core import logistic_kernel_new, reg_bose_kernel_new
-from .constants import COMPUTATION_SUCCESS
-from pylibsparseir.abstract import AbstractKernel
+from pylibsparseir.core import _lib
+from pylibsparseir.core import logistic_kernel_new, reg_bose_kernel_new
+from pylibsparseir.constants import COMPUTATION_SUCCESS
+from .abstract import AbstractKernel
 
 
 def kernel_domain(kernel: AbstractKernel):

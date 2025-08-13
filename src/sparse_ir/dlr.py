@@ -8,9 +8,9 @@ an alternative representation that can be more efficient for certain calculation
 import ctypes
 import numpy as np
 from .abstract import AbstractBasis
-from .core import basis_get_default_omega_sampling_points
-from .core import _lib, COMPUTATION_SUCCESS
-from .constants import SPIR_ORDER_ROW_MAJOR
+from pylibsparseir.core import basis_get_default_omega_sampling_points
+from pylibsparseir.core import _lib, COMPUTATION_SUCCESS
+from pylibsparseir.constants import SPIR_ORDER_ROW_MAJOR
 
 class DiscreteLehmannRepresentation(AbstractBasis):
     """

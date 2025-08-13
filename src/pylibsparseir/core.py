@@ -10,7 +10,7 @@ from ctypes import CDLL
 import numpy as np
 
 from .ctypes_wrapper import spir_kernel, spir_sve_result, spir_basis, spir_funcs, spir_sampling
-from .constants import COMPUTATION_SUCCESS, ORDER_ROW_MAJOR, SPIR_TWORK_FLOAT64, SPIR_TWORK_FLOAT64X2
+from pylibsparseir.constants import COMPUTATION_SUCCESS, ORDER_ROW_MAJOR, SPIR_TWORK_FLOAT64, SPIR_TWORK_FLOAT64X2
 
 def _find_library():
     """Find the SparseIR shared library."""
