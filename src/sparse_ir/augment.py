@@ -73,7 +73,7 @@ class AugmentedBasis(abstract.AbstractBasis):
 
     @property
     def statistics(self):
-        raise self._basis.statistics
+        return self._basis.statistics
 
     def __getitem__(self, index):
         stop = basis._slice_to_size(index)

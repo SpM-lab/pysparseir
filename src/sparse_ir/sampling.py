@@ -38,7 +38,7 @@ class TauSampling:
         if isinstance(basis, AugmentedBasis):
             # Create sampling object
             matrix = basis.u(self.sampling_points).T
-            self._ptr = tau_sampling_new_with_matrix(basis._basis._ptr, basis.statistics, self.sampling_points, matrix)
+            self._ptr = tau_sampling_new_with_matrix(basis, basis.statistics, self.sampling_points, matrix)
         else:
             # Create sampling object
             self._ptr = tau_sampling_new(basis._ptr, self.sampling_points)
