@@ -59,6 +59,10 @@ class AugmentedBasis(abstract.AbstractBasis):
                         self._basis.uhat, [aug.hat for aug in augmentations])
 
     @property
+    def basis(self):
+        return self._basis
+
+    @property
     def u(self):
         return self._u
 
@@ -131,8 +135,8 @@ class AugmentedBasis(abstract.AbstractBasis):
 
 class _AugmentedFunction:
     def __init__(self, fbasis, faug):
-        if fbasis.ndim != 1:
-            raise ValueError("must have vector of functions as fbasis")
+        #if fbasis.ndim != 1:
+        #    raise ValueError("must have vector of functions as fbasis")
         self._fbasis = fbasis
         self._faug = faug
         self._naug = len(faug)

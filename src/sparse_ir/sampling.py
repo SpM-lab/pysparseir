@@ -4,9 +4,9 @@ High-level Python classes for sparse sampling
 
 import numpy as np
 from ctypes import POINTER, c_double, c_int, byref
-from pylibsparseir.core import c_double_complex, tau_sampling_new, matsubara_sampling_new, _lib
+from pylibsparseir.core import c_double_complex, tau_sampling_new, tau_sampling_new_with_matrix, matsubara_sampling_new, matsubara_sampling_new_with_matrix, _lib
 from pylibsparseir.constants import COMPUTATION_SUCCESS, SPIR_ORDER_ROW_MAJOR
-
+from .augment import AugmentedBasis
 
 class TauSampling:
     """Sparse sampling in imaginary time."""
@@ -35,8 +35,13 @@ class TauSampling:
 
         self.sampling_points = np.sort(self.sampling_points)
 
-        # Create sampling object
-        self._ptr = tau_sampling_new(basis._ptr, self.sampling_points)
+        if isinstance(basis, AugmentedBasis):
+            # Create sampling object
+            matrix = basis.u(self.sampling_points).T
+            self._ptr = tau_sampling_new_with_matrix(basis._basis._ptr, basis.statistics, self.sampling_points, matrix)
+        else:
+            # Create sampling object
+            self._ptr = tau_sampling_new(basis._ptr, self.sampling_points)
 
     @property
     def tau(self):
@@ -172,8 +177,13 @@ class MatsubaraSampling:
         else:
             self.sampling_points = np.asarray(sampling_points, dtype=np.int64)
 
-        # Create sampling object
-        self._ptr = matsubara_sampling_new(basis._ptr, positive_only, self.sampling_points)
+        if isinstance(basis, AugmentedBasis):
+            # Create sampling object
+            matrix = basis.u(self.sampling_points).T
+            self._ptr = matsubara_sampling_new_with_matrix(basis._basis._ptr, basis.statistics, self.sampling_points, matrix)
+        else:
+            # Create sampling object
+            self._ptr = matsubara_sampling_new(basis._ptr, positive_only, self.sampling_points)
 
     @property
     def wn(self):
