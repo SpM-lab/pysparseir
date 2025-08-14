@@ -8,7 +8,7 @@ import ctypes
 from ctypes import c_int, byref
 
 from pylibsparseir.core import _lib, sve_result_new, sve_result_get_svals, sve_result_get_size
-from pylibsparseir.constants import COMPUTATION_SUCCESS, ORDER_ROW_MAJOR
+from pylibsparseir.constants import COMPUTATION_SUCCESS, SPIR_ORDER_ROW_MAJOR
 from .abstract import AbstractKernel
 from .kernel import LogisticKernel, RegularizedBoseKernel
 

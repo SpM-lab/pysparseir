@@ -27,8 +27,8 @@ STATISTICS_FERMIONIC = 1
 STATISTICS_BOSONIC = 0
 
 # Order type constants
-ORDER_COLUMN_MAJOR = 1
-ORDER_ROW_MAJOR = 0
+SPIR_ORDER_COLUMN_MAJOR = 1
+SPIR_ORDER_ROW_MAJOR = 0
 
 # Make sure these are available at module level
 SPIR_ORDER_ROW_MAJOR = 0
