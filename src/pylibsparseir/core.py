@@ -517,7 +517,7 @@ def tau_sampling_new_with_matrix(basis, statistics, sampling_points, matrix, pos
     sampling = _lib.spir_tau_sampling_new_with_matrix(
         SPIR_ORDER_ROW_MAJOR,
         _statistics_to_c(statistics),
-        len(basis),
+        basis.size,
         positive_only,
         sampling_points.ctypes.data_as(POINTER(c_double)),
         matrix.ctypes.data_as(POINTER(c_double)),
@@ -553,7 +553,7 @@ def matsubara_sampling_new_with_matrix(basis, statistics, sampling_points, matri
     sampling = _lib.spir_matsu_sampling_new_with_matrix(
         SPIR_ORDER_ROW_MAJOR,
         _statistics_to_c(statistics),
-        len(basis),
+        basis.size,
         positive_only,
         sampling_points.ctypes.data_as(POINTER(c_int64)),
         matrix.ctypes.data_as(POINTER(c_double_complex)),
