@@ -5,6 +5,7 @@ import numpy as np
 
 from . import abstract
 from . import basis
+from pylibsparseir.core import basis_get_default_tau_sampling_points_ext
 
 
 class AugmentedBasis(abstract.AbstractBasis):
@@ -117,7 +118,8 @@ class AugmentedBasis(abstract.AbstractBasis):
         # Return the sampling points of the underlying basis, but since we
         # use the size of self, we add two further points.  One then has to
         # hope that these give good sampling points.
-        return self._basis.default_tau_sampling_points(npoints=npoints)
+
+        return basis_get_default_tau_sampling_points_ext(self._basis._ptr, npoints)
 
     def default_matsubara_sampling_points(self, *, npoints=None,
                                           positive_only=False):

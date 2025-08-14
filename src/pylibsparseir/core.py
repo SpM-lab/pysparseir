@@ -138,6 +138,9 @@ def _setup_prototypes():
     _lib.spir_basis_get_default_taus.argtypes = [spir_basis, POINTER(c_double)]
     _lib.spir_basis_get_default_taus.restype = c_int
 
+    _lib.spir_basis_get_default_taus_ext.argtypes = [spir_basis, c_int, POINTER(c_double), POINTER(c_int)]
+    _lib.spir_basis_get_default_taus_ext.restype = c_int
+
     _lib.spir_basis_get_n_default_ws.argtypes = [spir_basis, POINTER(c_int)]
     _lib.spir_basis_get_n_default_ws.restype = c_int
 
@@ -449,6 +452,15 @@ def basis_get_default_tau_sampling_points(basis):
     if status != COMPUTATION_SUCCESS:
         raise RuntimeError(f"Failed to get default tau points: {status}")
 
+    return points
+
+def basis_get_default_tau_sampling_points_ext(basis, n_points):
+    """Get default tau sampling points for a basis."""
+    points = np.zeros(n_points, dtype=np.float64)
+    n_points_returned = c_int()
+    status = _lib.spir_basis_get_default_taus_ext(basis, n_points, points.ctypes.data_as(POINTER(c_double)), byref(n_points_returned))
+    if status != COMPUTATION_SUCCESS:
+        raise RuntimeError(f"Failed to get default tau points: {status}")
     return points
 
 def basis_get_default_omega_sampling_points(basis):
