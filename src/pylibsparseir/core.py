@@ -10,7 +10,7 @@ from ctypes import CDLL
 import numpy as np
 
 from .ctypes_wrapper import spir_kernel, spir_sve_result, spir_basis, spir_funcs, spir_sampling
-from pylibsparseir.constants import COMPUTATION_SUCCESS, SPIR_ORDER_ROW_MAJOR, SPIR_TWORK_FLOAT64, SPIR_TWORK_FLOAT64X2
+from pylibsparseir.constants import COMPUTATION_SUCCESS, SPIR_ORDER_ROW_MAJOR, SPIR_TWORK_FLOAT64, SPIR_TWORK_FLOAT64X2, SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC
 
 def _find_library():
     """Find the SparseIR shared library."""
@@ -502,12 +502,21 @@ def tau_sampling_new(basis, sampling_points=None):
 
     return sampling
 
+def _statistics_to_c(statistics):
+    """Convert statistics to c type."""
+    if statistics == "F":
+        return SPIR_STATISTICS_FERMIONIC
+    elif statistics == "B":
+        return SPIR_STATISTICS_BOSONIC
+    else:
+        raise ValueError(f"Invalid statistics: {statistics}")
+
 def tau_sampling_new_with_matrix(basis, statistics, sampling_points, matrix, positive_only=False):
     """Create a new tau sampling object with a matrix."""
     status = c_int()
     sampling = _lib.spir_tau_sampling_new_with_matrix(
         SPIR_ORDER_ROW_MAJOR,
-        statistics,
+        _statistics_to_c(statistics),
         len(basis),
         positive_only,
         sampling_points.ctypes.data_as(POINTER(c_double)),
@@ -543,7 +552,7 @@ def matsubara_sampling_new_with_matrix(basis, statistics, sampling_points, matri
     status = c_int()
     sampling = _lib.spir_matsu_sampling_new_with_matrix(
         SPIR_ORDER_ROW_MAJOR,
-        statistics,
+        _statistics_to_c(statistics),
         len(basis),
         positive_only,
         sampling_points.ctypes.data_as(POINTER(c_int64)),

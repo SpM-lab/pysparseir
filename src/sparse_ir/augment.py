@@ -1,5 +1,6 @@
 # Copyright (C) 2020-2021 Markus Wallerberger, Hiroshi Shinaoka, and others
 # SPDX-License-Identifier: MIT
+from . import _util
 import numpy as np
 
 from . import abstract

@@ -85,8 +85,8 @@ class TestCAPICoreFixed:
 
     def test_basis_constructors(self):
         """Test basis construction for different statistics"""
-        for stats, stats_val in [("fermionic", STATISTICS_FERMIONIC),
-                                ("bosonic", STATISTICS_BOSONIC)]:
+        for stats, stats_val in [("fermionic", SPIR_SPIR_STATISTICS_FERMIONIC),
+                                ("bosonic", SPIR_STATISTICS_BOSONIC)]:
             status = c_int()
             beta = 2.0
             wmax = 1.0
@@ -146,7 +146,7 @@ class TestCAPICoreFixed:
         Twork = SPIR_TWORK_FLOAT64X2
         max_size = -1
         sve = _lib.spir_sve_result_new(kernel, c_double(1e-10), c_double(cutoff), c_int(lmax), c_int(n_gauss), c_int(Twork), byref(status))
-        basis = _lib.spir_basis_new(c_int(STATISTICS_FERMIONIC), c_double(beta),
+        basis = _lib.spir_basis_new(c_int(SPIR_STATISTICS_FERMIONIC), c_double(beta),
                                    c_double(wmax), kernel, sve, max_size, byref(status))
 
         # Get default tau points
@@ -191,7 +191,7 @@ class TestCAPICoreFixed:
         n_gauss = -1
         Twork = SPIR_TWORK_FLOAT64X2
         sve = _lib.spir_sve_result_new(kernel, c_double(1e-10), c_double(cutoff), c_int(lmax), c_int(n_gauss), c_int(Twork), byref(status))
-        basis = _lib.spir_basis_new(c_int(STATISTICS_FERMIONIC), c_double(beta),
+        basis = _lib.spir_basis_new(c_int(SPIR_STATISTICS_FERMIONIC), c_double(beta),
                                    c_double(wmax), kernel, sve, max_size, byref(status))
 
         # Get default Matsubara points
@@ -232,7 +232,7 @@ class TestCAPICoreFixed:
         Twork = SPIR_TWORK_FLOAT64X2
         max_size = -1
         sve = _lib.spir_sve_result_new(kernel, c_double(1e-10), c_double(cutoff), c_int(lmax), c_int(n_gauss), c_int(Twork), byref(status))
-        basis = _lib.spir_basis_new(c_int(STATISTICS_FERMIONIC), c_double(beta),
+        basis = _lib.spir_basis_new(c_int(SPIR_STATISTICS_FERMIONIC), c_double(beta),
                                    c_double(wmax), kernel, sve, max_size, byref(status))
 
         # Get u functions
@@ -263,7 +263,7 @@ class TestCAPICoreFixed:
         n_gauss = -1
         Twork = SPIR_TWORK_FLOAT64X2
         sve = _lib.spir_sve_result_new(kernel, c_double(1e-10), c_double(cutoff), c_int(lmax), c_int(n_gauss), c_int(Twork), byref(status))
-        basis = _lib.spir_basis_new(c_int(STATISTICS_FERMIONIC), c_double(10.0),
+        basis = _lib.spir_basis_new(c_int(SPIR_STATISTICS_FERMIONIC), c_double(10.0),
                                    c_double(1.0), kernel, sve, -1, byref(status))
 
         u_funcs = _lib.spir_basis_get_u(basis, byref(status))
@@ -323,7 +323,7 @@ class TestBasisFunctionEvaluation:
 
         return basis, COMPUTATION_SUCCESS
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     def test_basis_functions_comprehensive(self, statistics):
         """Test comprehensive basis function evaluation matching Julia tests"""
         beta = 2.0
@@ -381,7 +381,7 @@ class TestBasisFunctionEvaluation:
 
         # Test row-major order for u basis
         batch_status = _lib.spir_funcs_batch_eval(
-            u, ORDER_ROW_MAJOR, num_points,
+            u, SPIR_ORDER_ROW_MAJOR, num_points,
             xs.ctypes.data_as(POINTER(c_double)),
             batch_out.ctypes.data_as(POINTER(c_double))
         )
@@ -390,7 +390,7 @@ class TestBasisFunctionEvaluation:
 
         # Test column-major order for u basis
         batch_status = _lib.spir_funcs_batch_eval(
-            u, ORDER_COLUMN_MAJOR, num_points,
+            u, SPIR_ORDER_ROW_MAJOR, num_points,
             xs.ctypes.data_as(POINTER(c_double)),
             batch_out.ctypes.data_as(POINTER(c_double))
         )
@@ -399,7 +399,7 @@ class TestBasisFunctionEvaluation:
 
         # Test row-major order for v basis
         batch_status = _lib.spir_funcs_batch_eval(
-            v, ORDER_ROW_MAJOR, num_points,
+            v, SPIR＿ORDER_ROW_MAJOR, num_points,
             xs.ctypes.data_as(POINTER(c_double)),
             batch_out.ctypes.data_as(POINTER(c_double))
         )
@@ -408,7 +408,7 @@ class TestBasisFunctionEvaluation:
 
         # Test column-major order for v basis
         batch_status = _lib.spir_funcs_batch_eval(
-            v, ORDER_COLUMN_MAJOR, num_points,
+            v, SPIR_ORDER_COLUMN_MAJOR, num_points,
             xs.ctypes.data_as(POINTER(c_double)),
             batch_out.ctypes.data_as(POINTER(c_double))
         )
@@ -422,7 +422,7 @@ class TestBasisFunctionEvaluation:
 
         # Test batch evaluation error cases
         batch_status = _lib.spir_funcs_batch_eval(
-            None, ORDER_ROW_MAJOR, num_points,
+            None, SPIR＿ORDER_ROW_MAJOR, num_points,
             xs.ctypes.data_as(POINTER(c_double)),
             batch_out.ctypes.data_as(POINTER(c_double))
         )
@@ -436,8 +436,8 @@ class TestBasisFunctionEvaluation:
 
     def test_basis_statistics_verification(self):
         """Test basis statistics retrieval for both fermionic and bosonic cases"""
-        for stats_val, expected in [(STATISTICS_FERMIONIC, STATISTICS_FERMIONIC),
-                                   (STATISTICS_BOSONIC, STATISTICS_BOSONIC)]:
+        for stats_val, expected in [(SPIR_SPIR_STATISTICS_FERMIONIC, SPIR_SPIR_STATISTICS_FERMIONIC),
+                                   (SPIR_STATISTICS_BOSONIC, SPIR_STATISTICS_BOSONIC)]:
             beta = 2.0
             wmax = 1.0
             epsilon = 1e-6
@@ -456,9 +456,9 @@ class TestBasisFunctionEvaluation:
 
     def test_basis_constructor_with_sve_patterns(self):
         """Test different basis constructor patterns with explicit SVE"""
-        for statistics in [STATISTICS_FERMIONIC, STATISTICS_BOSONIC]:
+        for statistics in [SPIR_SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC]:
             for use_reg_bose in [False, True]:
-                if use_reg_bose and statistics == STATISTICS_FERMIONIC:
+                if use_reg_bose and statistics == SPIR_SPIR_STATISTICS_FERMIONIC:
                     continue  # Skip invalid combination
 
                 beta = 2.0
