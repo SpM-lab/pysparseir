@@ -154,7 +154,7 @@ def _setup_prototypes():
     _lib.spir_tau_sampling_new.argtypes = [spir_basis, c_int, POINTER(c_double), POINTER(c_int)]
     _lib.spir_tau_sampling_new.restype = spir_sampling
 
-    _lib.spir_tau_sampling_new_with_matrix.argtypes = [spir_basis, c_int, c_int, c_int, c_int, POINTER(c_double), POINTER(c_double), POINTER(c_int)]
+    _lib.spir_tau_sampling_new_with_matrix.argtypes = [c_int, c_int, c_int, c_int, POINTER(c_double), POINTER(c_double), POINTER(c_int)]
     _lib.spir_tau_sampling_new_with_matrix.restype = spir_sampling
 
     _lib.spir_matsu_sampling_new.argtypes = [spir_basis, c_bool, c_int, POINTER(c_int64), POINTER(c_int)]
