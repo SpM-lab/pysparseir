@@ -179,10 +179,11 @@ class MatsubaraSampling:
         if isinstance(basis, augment.AugmentedBasis):
             # Create sampling object
             matrix = basis.uhat(self.sampling_points).T
+            matrix = np.ascontiguousarray(matrix, dtype=np.complex128)
 
             self._ptr = matsubara_sampling_new_with_matrix(
                 basis.statistics,
-                basis._basis.size,
+                basis.size,
                 positive_only,
                 self.sampling_points,
                 matrix
@@ -212,6 +213,8 @@ class MatsubaraSampling:
         ndarray
             Values at Matsubara frequencies (complex)
         """
+        # For better numerical stability, we need to make the input array contiguous.
+        al = np.ascontiguousarray(al)
         output_dims = list(al.shape)
         ndim = len(output_dims)
         input_dims = np.asarray(al.shape, dtype=np.int32)
@@ -251,6 +254,7 @@ class MatsubaraSampling:
         """
         Fit basis coefficients from Matsubara frequency values.
         """
+        ax = np.ascontiguousarray(ax)
         ndim = len(ax.shape)
         input_dims = np.asarray(ax.shape, dtype=np.int32)
         output_dims = list(ax.shape)
