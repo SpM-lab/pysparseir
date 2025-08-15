@@ -25,7 +25,7 @@ from pylibsparseir.constants import *
 def _spir_basis_new(stat, beta, wmax, epsilon):
     """Helper function to create basis directly via C API (for testing)."""
     # Create kernel
-    if stat == STATISTICS_FERMIONIC:
+    if stat == SPIR_STATISTICS_FERMIONIC:
         kernel = logistic_kernel_new(beta * wmax)
     else:
         kernel = reg_bose_kernel_new(beta * wmax)
@@ -59,7 +59,7 @@ def _get_dims(target_dim_size, extra_dims, target_dim):
 class TestIntegrationWorkflow:
     """Test complete IR-DLR workflow integration."""
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     @pytest.mark.parametrize("positive_only", [True, False])
     def test_complete_ir_dlr_workflow(self, statistics, positive_only):
         """Test complete workflow: IR basis → DLR → sampling → conversions."""
@@ -204,7 +204,7 @@ class TestIntegrationWorkflow:
         # DLR to IR
         status = _lib.spir_dlr2ir_dd(
             dlr,
-            ORDER_COLUMN_MAJOR,
+            SPIR_ORDER_ROW_MAJOR,
             ndim,
             dlr_dims.ctypes.data_as(POINTER(c_int)),
             target_dim,
@@ -241,7 +241,7 @@ class TestIntegrationWorkflow:
         ir_coeffs_from_dlr = np.zeros(ir_size, dtype=np.float64)
         status = _lib.spir_dlr2ir_dd(
             dlr,
-            ORDER_COLUMN_MAJOR,
+            SPIR_ORDER_ROW_MAJOR,
             1,
             np.array([n_poles], dtype=np.int32).ctypes.data_as(POINTER(c_int)),
             0,
@@ -254,7 +254,7 @@ class TestIntegrationWorkflow:
         ir_tau_values = np.zeros(n_tau_points, dtype=np.float64)
         status = _lib.spir_sampling_eval_dd(
             ir_tau_sampling,
-            ORDER_COLUMN_MAJOR,
+            SPIR_ORDER_ROW_MAJOR,
             1,
             np.array([ir_size], dtype=np.int32).ctypes.data_as(POINTER(c_int)),
             0,
@@ -267,7 +267,7 @@ class TestIntegrationWorkflow:
         dlr_tau_values = np.zeros(n_tau_points, dtype=np.float64)
         status = _lib.spir_sampling_eval_dd(
             dlr_tau_sampling,
-            ORDER_COLUMN_MAJOR,
+            SPIR_ORDER_ROW_MAJOR,
             1,
             np.array([n_poles], dtype=np.int32).ctypes.data_as(POINTER(c_int)),
             0,
@@ -285,7 +285,7 @@ class TestIntegrationWorkflow:
 class TestIntegrationMultiDimensional:
     """Test multi-dimensional integration workflows."""
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     def test_multidimensional_dlr_ir_workflow(self, statistics):
         """Test multi-dimensional DLR-IR workflow."""
         beta = 50.0
@@ -352,7 +352,7 @@ class TestIntegrationMultiDimensional:
 
         status = _lib.spir_dlr2ir_dd(
             dlr,
-            ORDER_ROW_MAJOR,
+            SPIR_ORDER_ROW_MAJOR,
             3,
             np.array(dlr_dims, dtype=np.int32).ctypes.data_as(POINTER(c_int)),
             target_dim,
@@ -375,7 +375,7 @@ class TestIntegrationErrorHandling:
         epsilon = 1e-6
 
         # Create IR basis
-        ir_basis = _spir_basis_new(STATISTICS_FERMIONIC, beta, wmax, epsilon)
+        ir_basis = _spir_basis_new(SPIR_STATISTICS_FERMIONIC, beta, wmax, epsilon)
         assert ir_basis is not None
 
         # Create DLR
@@ -402,7 +402,7 @@ class TestIntegrationErrorHandling:
             # This may or may not fail depending on C implementation robustness
             status = _lib.spir_dlr2ir_dd(
                 dlr,
-                ORDER_COLUMN_MAJOR,
+                SPIR_ORDER_ROW_MAJOR,
                 1,
                 wrong_dims.ctypes.data_as(POINTER(c_int)),
                 0,
@@ -471,7 +471,7 @@ class TestEnhancedDLRSamplingIntegration:
 
         # Use C API directly with complex array (like Julia version)
         status = _lib.spir_funcs_batch_eval_matsu(
-            uhat, ORDER_COLUMN_MAJOR, len(matsubara_indices),
+            uhat, SPIR_ORDER_ROW_MAJOR, len(matsubara_indices),
             freq_indices.ctypes.data_as(POINTER(c_int64)),
             uhat_eval_mat.ctypes.data_as(POINTER(c_double))
         )
@@ -493,7 +493,7 @@ class TestEnhancedDLRSamplingIntegration:
             # For now, just handle 1D case which is what we're testing
             raise NotImplementedError("Multi-dimensional coefficient transformation not implemented")
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     @pytest.mark.parametrize("positive_only", [True, False])
     def test_complete_dlr_sampling_workflow(self, statistics, positive_only):
         """Test complete DLR sampling workflow with comprehensive integration"""
@@ -598,7 +598,7 @@ class TestEnhancedDLRSamplingIntegration:
             # Convert DLR to IR
             ir_coeffs = np.zeros(ir_size.value, dtype=np.float64)
             status = _lib.spir_dlr2ir_dd(
-                dlr, ORDER_COLUMN_MAJOR, 1,
+                dlr, SPIR_ORDER_ROW_MAJOR, 1,
                 np.array([n_poles.value], dtype=np.int32).ctypes.data_as(POINTER(c_int)),
                 0,
                 dlr_coeffs.ctypes.data_as(POINTER(c_double)),
@@ -620,7 +620,7 @@ class TestEnhancedDLRSamplingIntegration:
             # Test using C API sampling evaluation
             gtau_from_dlr_sampling = np.zeros(n_tau_points.value, dtype=np.float64)
             status = _lib.spir_sampling_eval_dd(
-                dlr_tau_sampling, ORDER_COLUMN_MAJOR, 1,
+                dlr_tau_sampling, SPIR_ORDER_ROW_MAJOR, 1,
                 np.array([n_poles.value], dtype=np.int32).ctypes.data_as(POINTER(c_int)),
                 0,
                 dlr_coeffs.ctypes.data_as(POINTER(c_double)),
@@ -656,7 +656,7 @@ class TestEnhancedDLRSamplingIntegration:
 
     def test_dlr_sampling_tensor_operations(self):
         """Test DLR sampling with multi-dimensional tensor operations"""
-        statistics = STATISTICS_FERMIONIC
+        statistics = SPIR_STATISTICS_FERMIONIC
         beta = 5.0
         wmax = 2.0
         epsilon = 1e-8
@@ -691,7 +691,7 @@ class TestEnhancedDLRSamplingIntegration:
             # Convert DLR to IR for 2D case
             ir_coeffs_2d = np.zeros(ir_size.value * d1, dtype=np.float64)
             status = _lib.spir_dlr2ir_dd(
-                dlr, ORDER_COLUMN_MAJOR, 2,
+                dlr, SPIR_ORDER_ROW_MAJOR, 2,
                 np.array(dims_dlr, dtype=np.int32).ctypes.data_as(POINTER(c_int)),
                 0,
                 dlr_coeffs_2d.ctypes.data_as(POINTER(c_double)),

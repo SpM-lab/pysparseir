@@ -24,7 +24,7 @@ from pylibsparseir.constants import *
 def _spir_basis_new(stat, beta, wmax, epsilon):
     """Helper function to create basis directly via C API (for testing)."""
     # Create kernel
-    if stat == STATISTICS_FERMIONIC:
+    if stat == SPIR_STATISTICS_FERMIONIC:
         kernel = logistic_kernel_new(beta * wmax)
     else:
         kernel = reg_bose_kernel_new(beta * wmax)
@@ -41,7 +41,7 @@ def _spir_basis_new(stat, beta, wmax, epsilon):
 class TestSamplingBasics:
     """Test basic sampling functionality."""
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     def test_tau_sampling_creation(self, statistics):
         """Test basic tau sampling creation and properties."""
         beta = 1.0
@@ -102,7 +102,7 @@ class TestSamplingBasics:
         _lib.spir_sampling_release(sampling)
         _lib.spir_basis_release(basis)
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     @pytest.mark.parametrize("positive_only", [True, False])
     def test_matsubara_sampling_creation(self, statistics, positive_only):
         """Test basic Matsubara sampling creation and properties."""
@@ -154,7 +154,7 @@ class TestSamplingBasics:
 class TestSamplingEvaluation1D:
     """Test 1D sampling evaluation (column major)."""
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     def test_tau_sampling_evaluation_1d_column_major(self, statistics):
         """Test 1D tau sampling evaluation with column major layout."""
         beta = 1.0
@@ -202,7 +202,7 @@ class TestSamplingEvaluation1D:
         # Evaluate using C API
         evaluate_status = _lib.spir_sampling_eval_dd(
             sampling,
-            ORDER_COLUMN_MAJOR,
+            SPIR_ORDER_ROW_MAJOR,
             ndim,
             dims.ctypes.data_as(POINTER(c_int)),
             target_dim,
@@ -214,7 +214,7 @@ class TestSamplingEvaluation1D:
         # Fit back to coefficients
         fit_status = _lib.spir_sampling_fit_dd(
             sampling,
-            ORDER_COLUMN_MAJOR,
+            SPIR_ORDER_ROW_MAJOR,
             ndim,
             dims.ctypes.data_as(POINTER(c_int)),
             target_dim,
@@ -234,7 +234,7 @@ class TestSamplingEvaluation1D:
 class TestSamplingEvaluationMultiD:
     """Test multi-dimensional sampling evaluation."""
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     def test_tau_sampling_evaluation_4d_row_major(self, statistics):
         """Test 4D tau sampling evaluation with row major layout."""
         beta = 1.0
@@ -300,7 +300,7 @@ class TestSamplingEvaluationMultiD:
             # Evaluate using C API
             evaluate_status = _lib.spir_sampling_eval_dd(
                 sampling,
-                ORDER_ROW_MAJOR,
+                SPIR_ORDER_ROW_MAJOR,
                 ndim,
                 dims.ctypes.data_as(POINTER(c_int)),
                 target_dim,
@@ -312,7 +312,7 @@ class TestSamplingEvaluationMultiD:
             # Fit back to coefficients
             fit_status = _lib.spir_sampling_fit_dd(
                 sampling,
-                ORDER_ROW_MAJOR,
+                SPIR_ORDER_ROW_MAJOR,
                 ndim,
                 dims.ctypes.data_as(POINTER(c_int)),
                 target_dim,
@@ -332,7 +332,7 @@ class TestSamplingEvaluationMultiD:
 class TestSamplingEvaluationComplex:
     """Test complex-valued sampling evaluation."""
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     def test_matsubara_sampling_evaluation_complex(self, statistics):
         """Test complex Matsubara sampling evaluation."""
         beta = 1.0
@@ -388,7 +388,7 @@ class TestSamplingEvaluationComplex:
         # Evaluate using C API with complex numbers
         evaluate_status = _lib.spir_sampling_eval_zz(
             sampling,
-            ORDER_COLUMN_MAJOR,
+            SPIR_ORDER_ROW_MAJOR,
             ndim,
             dims.ctypes.data_as(POINTER(c_int)),
             target_dim,
@@ -400,7 +400,7 @@ class TestSamplingEvaluationComplex:
         # Fit back to coefficients
         fit_status = _lib.spir_sampling_fit_zz(
             sampling,
-            ORDER_COLUMN_MAJOR,
+            SPIR_ORDER_ROW_MAJOR,
             ndim,
             dims.ctypes.data_as(POINTER(c_int)),
             target_dim,
@@ -410,7 +410,7 @@ class TestSamplingEvaluationComplex:
 
         # For bosonic systems, complex Matsubara sampling might have different constraints
         # We allow the fit to fail for bosonic case as it might be a legitimate limitation
-        if statistics == STATISTICS_BOSONIC and fit_status == SPIR_INPUT_DIMENSION_MISMATCH:
+        if statistics == SPIR_STATISTICS_BOSONIC and fit_status == SPIR_INPUT_DIMENSION_MISMATCH:
             # This is acceptable for bosonic complex Matsubara sampling
             # The evaluation succeeded, which means the basic functionality works
             pass
@@ -427,7 +427,7 @@ class TestSamplingEvaluationComplex:
 class TestAdvanced4DComplexSampling:
     """Advanced 4D complex sampling tests matching LibSparseIR.jl coverage"""
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     def test_tau_sampling_evaluation_4d_row_major_complex(self, statistics):
         """Test 4D tau sampling evaluation with complex data and row-major layout"""
         beta = 1.0
@@ -496,7 +496,7 @@ class TestAdvanced4DComplexSampling:
             evaluate_output = np.zeros(output_total_size * 2, dtype=np.float64)
             evaluate_status = _lib.spir_sampling_eval_zz(
                 sampling,
-                ORDER_ROW_MAJOR,
+                SPIR_ORDER_ROW_MAJOR,
                 ndim,
                 np.array(dims, dtype=np.int32).ctypes.data_as(POINTER(c_int)),
                 target_dim,
@@ -509,7 +509,7 @@ class TestAdvanced4DComplexSampling:
             fit_output = np.zeros(total_size * 2, dtype=np.float64)
             fit_status = _lib.spir_sampling_fit_zz(
                 sampling,
-                ORDER_ROW_MAJOR,
+                SPIR_ORDER_ROW_MAJOR,
                 ndim,
                 np.array(output_dims, dtype=np.int32).ctypes.data_as(POINTER(c_int)),
                 target_dim,
@@ -526,7 +526,7 @@ class TestAdvanced4DComplexSampling:
         _lib.spir_sampling_release(sampling)
         _lib.spir_basis_release(basis)
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     def test_tau_sampling_evaluation_4d_column_major_complex(self, statistics):
         """Test 4D tau sampling evaluation with complex data and column-major layout"""
         beta = 1.0
@@ -595,7 +595,7 @@ class TestAdvanced4DComplexSampling:
             evaluate_output = np.zeros(output_total_size * 2, dtype=np.float64)
             evaluate_status = _lib.spir_sampling_eval_zz(
                 sampling,
-                ORDER_COLUMN_MAJOR,
+                SPIR_ORDER_ROW_MAJOR,
                 ndim,
                 np.array(dims, dtype=np.int32).ctypes.data_as(POINTER(c_int)),
                 target_dim,
@@ -608,7 +608,7 @@ class TestAdvanced4DComplexSampling:
             fit_output = np.zeros(total_size * 2, dtype=np.float64)
             fit_status = _lib.spir_sampling_fit_zz(
                 sampling,
-                ORDER_COLUMN_MAJOR,
+                SPIR_ORDER_ROW_MAJOR,
                 ndim,
                 np.array(output_dims, dtype=np.int32).ctypes.data_as(POINTER(c_int)),
                 target_dim,
@@ -625,7 +625,7 @@ class TestAdvanced4DComplexSampling:
         _lib.spir_sampling_release(sampling)
         _lib.spir_basis_release(basis)
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     def test_3d_real_sampling_comprehensive(self, statistics):
         """Test 3D real sampling with different target dimensions for completeness"""
         beta = 2.0
@@ -684,7 +684,7 @@ class TestAdvanced4DComplexSampling:
             evaluate_output = np.zeros(output_total_size, dtype=np.float64)
             evaluate_status = _lib.spir_sampling_eval_dd(
                 sampling,
-                ORDER_COLUMN_MAJOR,
+                SPIR_ORDER_ROW_MAJOR,
                 ndim,
                 np.array(dims, dtype=np.int32).ctypes.data_as(POINTER(c_int)),
                 target_dim,
@@ -697,7 +697,7 @@ class TestAdvanced4DComplexSampling:
             fit_output = np.zeros(total_size, dtype=np.float64)
             fit_status = _lib.spir_sampling_fit_dd(
                 sampling,
-                ORDER_COLUMN_MAJOR,
+                SPIR_ORDER_ROW_MAJOR,
                 ndim,
                 np.array(output_dims, dtype=np.int32).ctypes.data_as(POINTER(c_int)),
                 target_dim,

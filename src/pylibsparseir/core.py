@@ -10,7 +10,7 @@ from ctypes import CDLL
 import numpy as np
 
 from .ctypes_wrapper import spir_kernel, spir_sve_result, spir_basis, spir_funcs, spir_sampling
-from pylibsparseir.constants import COMPUTATION_SUCCESS, ORDER_ROW_MAJOR, SPIR_TWORK_FLOAT64, SPIR_TWORK_FLOAT64X2
+from pylibsparseir.constants import COMPUTATION_SUCCESS, SPIR_ORDER_ROW_MAJOR, SPIR_ORDER_COLUMN_MAJOR, SPIR_TWORK_FLOAT64, SPIR_TWORK_FLOAT64X2, SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC
 
 def _find_library():
     """Find the SparseIR shared library."""
@@ -138,6 +138,9 @@ def _setup_prototypes():
     _lib.spir_basis_get_default_taus.argtypes = [spir_basis, POINTER(c_double)]
     _lib.spir_basis_get_default_taus.restype = c_int
 
+    _lib.spir_basis_get_default_taus_ext.argtypes = [spir_basis, c_int, POINTER(c_double), POINTER(c_int)]
+    _lib.spir_basis_get_default_taus_ext.restype = c_int
+
     _lib.spir_basis_get_n_default_ws.argtypes = [spir_basis, POINTER(c_int)]
     _lib.spir_basis_get_n_default_ws.restype = c_int
 
@@ -147,15 +150,36 @@ def _setup_prototypes():
     _lib.spir_basis_get_n_default_matsus.argtypes = [spir_basis, c_bool, POINTER(c_int)]
     _lib.spir_basis_get_n_default_matsus.restype = c_int
 
+    _lib.spir_basis_get_n_default_matsus_ext.argtypes = [spir_basis, c_bool, c_int, POINTER(c_int)]
+    _lib.spir_basis_get_n_default_matsus_ext.restype = c_int
+
     _lib.spir_basis_get_default_matsus.argtypes = [spir_basis, c_bool, POINTER(c_int64)]
     _lib.spir_basis_get_default_matsus.restype = c_int
+
+    _lib.spir_basis_get_default_matsus_ext.argtypes = [spir_basis, c_bool, c_int, POINTER(c_int64), POINTER(c_int)]
+    _lib.spir_basis_get_default_matsus_ext.restype = c_int
 
     # Sampling objects
     _lib.spir_tau_sampling_new.argtypes = [spir_basis, c_int, POINTER(c_double), POINTER(c_int)]
     _lib.spir_tau_sampling_new.restype = spir_sampling
 
+    _lib.spir_tau_sampling_new_with_matrix.argtypes = [c_int, c_int, c_int, c_int, POINTER(c_double), POINTER(c_double), POINTER(c_int)]
+    _lib.spir_tau_sampling_new_with_matrix.restype = spir_sampling
+
     _lib.spir_matsu_sampling_new.argtypes = [spir_basis, c_bool, c_int, POINTER(c_int64), POINTER(c_int)]
     _lib.spir_matsu_sampling_new.restype = spir_sampling
+
+    _lib.spir_matsu_sampling_new_with_matrix.argtypes = [
+        c_int,                          # order
+        c_int,                          # statistics
+        c_int,                          # basis_size
+        c_bool,                         # positive_only
+        c_int,                          # num_points
+        POINTER(c_int64),              # points
+        POINTER(c_double_complex),     # matrix
+        POINTER(c_int)                 # status
+    ]
+    _lib.spir_matsu_sampling_new_with_matrix.restype = spir_sampling
 
     # Sampling operations
     _lib.spir_sampling_eval_dd.argtypes = [
@@ -445,6 +469,15 @@ def basis_get_default_tau_sampling_points(basis):
 
     return points
 
+def basis_get_default_tau_sampling_points_ext(basis, n_points):
+    """Get default tau sampling points for a basis."""
+    points = np.zeros(n_points, dtype=np.float64)
+    n_points_returned = c_int()
+    status = _lib.spir_basis_get_default_taus_ext(basis, n_points, points.ctypes.data_as(POINTER(c_double)), byref(n_points_returned))
+    if status != COMPUTATION_SUCCESS:
+        raise RuntimeError(f"Failed to get default tau points: {status}")
+    return points
+
 def basis_get_default_omega_sampling_points(basis):
     """Get default omega (real frequency) sampling points for a basis."""
     # Get number of points
@@ -477,6 +510,22 @@ def basis_get_default_matsubara_sampling_points(basis, positive_only=False):
 
     return points
 
+def basis_get_n_default_matsus_ext(basis, n_points, positive_only):
+    """Get the number of default Matsubara sampling points for a basis."""
+    n_points_returned = c_int()
+    status = _lib.spir_basis_get_n_default_matsus_ext(basis, c_bool(positive_only), n_points, byref(n_points_returned))
+    if status != COMPUTATION_SUCCESS:
+        raise RuntimeError(f"Failed to get number of default Matsubara points: {status}")
+    return n_points_returned.value
+
+def basis_get_default_matsus_ext(basis, positive_only, points):
+    n_points = len(points)
+    n_points_returned = c_int()
+    status = _lib.spir_basis_get_default_matsus_ext(basis, c_bool(positive_only), n_points, points.ctypes.data_as(POINTER(c_int64)), byref(n_points_returned))
+    if status != COMPUTATION_SUCCESS:
+        raise RuntimeError(f"Failed to get default Matsubara points: {status}")
+    return points
+
 def tau_sampling_new(basis, sampling_points=None):
     """Create a new tau sampling object."""
     if sampling_points is None:
@@ -489,6 +538,32 @@ def tau_sampling_new(basis, sampling_points=None):
     sampling = _lib.spir_tau_sampling_new(
         basis, n_points,
         sampling_points.ctypes.data_as(POINTER(c_double)),
+        byref(status)
+    )
+    if status.value != COMPUTATION_SUCCESS:
+        raise RuntimeError(f"Failed to create tau sampling: {status.value}")
+
+    return sampling
+
+def _statistics_to_c(statistics):
+    """Convert statistics to c type."""
+    if statistics == "F":
+        return SPIR_STATISTICS_FERMIONIC
+    elif statistics == "B":
+        return SPIR_STATISTICS_BOSONIC
+    else:
+        raise ValueError(f"Invalid statistics: {statistics}")
+
+def tau_sampling_new_with_matrix(basis, statistics, sampling_points, matrix):
+    """Create a new tau sampling object with a matrix."""
+    status = c_int()
+    sampling = _lib.spir_tau_sampling_new_with_matrix(
+        SPIR_ORDER_ROW_MAJOR,
+        _statistics_to_c(statistics),
+        basis.size,
+        sampling_points.size,
+        sampling_points.ctypes.data_as(POINTER(c_double)),
+        matrix.ctypes.data_as(POINTER(c_double)),
         byref(status)
     )
     if status.value != COMPUTATION_SUCCESS:
@@ -509,6 +584,24 @@ def matsubara_sampling_new(basis, positive_only=False, sampling_points=None):
         basis, c_bool(positive_only), n_points,
         sampling_points.ctypes.data_as(POINTER(c_int64)),
         byref(status)
+    )
+    if status.value != COMPUTATION_SUCCESS:
+        raise RuntimeError(f"Failed to create Matsubara sampling: {status.value}")
+
+    return sampling
+
+def matsubara_sampling_new_with_matrix(statistics, basis_size, positive_only, sampling_points, matrix):
+    """Create a new Matsubara sampling object with a matrix."""
+    status = c_int()
+    sampling = _lib.spir_matsu_sampling_new_with_matrix(
+        SPIR_ORDER_ROW_MAJOR,                           # order
+        _statistics_to_c(statistics),                   # statistics
+        c_int(basis_size),                              # basis_size
+        c_bool(positive_only),                          # positive_only
+        c_int(len(sampling_points)),                    # num_points
+        sampling_points.ctypes.data_as(POINTER(c_int64)), # points
+        matrix.ctypes.data_as(POINTER(c_double_complex)), # matrix
+        byref(status)                                   # status
     )
     if status.value != COMPUTATION_SUCCESS:
         raise RuntimeError(f"Failed to create Matsubara sampling: {status.value}")

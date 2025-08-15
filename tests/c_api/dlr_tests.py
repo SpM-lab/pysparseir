@@ -18,13 +18,13 @@ from pylibsparseir.core import (
     COMPUTATION_SUCCESS
 )
 from pylibsparseir.ctypes_wrapper import *
-from pylibsparseir.constants import STATISTICS_FERMIONIC, STATISTICS_BOSONIC, SPIR_ORDER_ROW_MAJOR
+from pylibsparseir.constants import SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC, SPIR_ORDER_ROW_MAJOR
 
 
 def _spir_basis_new(stat, beta, wmax, epsilon):
     """Helper function to create basis directly via C API (for testing)."""
     # Create kernel
-    if stat == STATISTICS_FERMIONIC:
+    if stat == SPIR_STATISTICS_FERMIONIC:
         kernel = logistic_kernel_new(beta * wmax)
     else:
         kernel = reg_bose_kernel_new(beta * wmax)
@@ -42,7 +42,7 @@ def _spir_basis_new(stat, beta, wmax, epsilon):
 class TestDLRConstruction:
     """Test DLR construction and basic properties."""
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     def test_dlr_construction(self, statistics):
         """Test DLR construction using default poles."""
         beta = 10000.0  # Large beta for better conditioning
@@ -108,7 +108,7 @@ class TestDLRConstruction:
         _lib.spir_basis_release(dlr)
         _lib.spir_basis_release(dlr_with_poles)
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     def test_dlr_with_custom_poles(self, statistics):
         """Test DLR construction with custom pole selection."""
         beta = 1000.0
@@ -172,7 +172,7 @@ class TestDLRConstruction:
 class TestDLRTransformations:
     """Test DLR-IR transformations."""
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     def test_dlr_to_ir_conversion_1d(self, statistics):
         """Test 1D DLR to IR conversion."""
         beta = 1000.0
@@ -228,7 +228,7 @@ class TestDLRTransformations:
         _lib.spir_basis_release(dlr)
         _lib.spir_basis_release(ir_basis)
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     def test_dlr_to_ir_conversion_multidim(self, statistics):
         """Test multi-dimensional DLR to IR conversion."""
         beta = 100.0
@@ -299,7 +299,7 @@ class TestDLRTransformations:
         _lib.spir_basis_release(dlr)
         _lib.spir_basis_release(ir_basis)
 
-    @pytest.mark.parametrize("statistics", [STATISTICS_FERMIONIC, STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     def test_dlr_to_ir_conversion_complex(self, statistics):
         """Test complex DLR to IR conversion."""
         beta = 100.0
