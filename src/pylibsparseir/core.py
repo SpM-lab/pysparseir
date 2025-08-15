@@ -169,7 +169,16 @@ def _setup_prototypes():
     _lib.spir_matsu_sampling_new.argtypes = [spir_basis, c_bool, c_int, POINTER(c_int64), POINTER(c_int)]
     _lib.spir_matsu_sampling_new.restype = spir_sampling
 
-    _lib.spir_matsu_sampling_new_with_matrix.argtypes = [spir_basis, c_int, c_int, c_int, c_int, POINTER(c_int64), POINTER(c_double_complex), POINTER(c_int)]
+    _lib.spir_matsu_sampling_new_with_matrix.argtypes = [
+        c_int,                          # order
+        c_int,                          # statistics
+        c_int,                          # basis_size
+        c_bool,                         # positive_only
+        c_int,                          # num_points
+        POINTER(c_int64),              # points
+        POINTER(c_double_complex),     # matrix
+        POINTER(c_int)                 # status
+    ]
     _lib.spir_matsu_sampling_new_with_matrix.restype = spir_sampling
 
     # Sampling operations
@@ -501,15 +510,16 @@ def basis_get_default_matsubara_sampling_points(basis, positive_only=False):
 
     return points
 
-def basis_get_n_default_matsus_ext(basis, positive_only):
+def basis_get_n_default_matsus_ext(basis, n_points, positive_only):
     """Get the number of default Matsubara sampling points for a basis."""
-    n_points = c_int()
-    status = _lib.spir_basis_get_n_default_matsus_ext(basis, c_bool(positive_only), n_points, byref(n_points))
+    n_points_returned = c_int()
+    status = _lib.spir_basis_get_n_default_matsus_ext(basis, c_bool(positive_only), n_points, byref(n_points_returned))
     if status != COMPUTATION_SUCCESS:
         raise RuntimeError(f"Failed to get number of default Matsubara points: {status}")
-    return n_points.value
+    return n_points_returned.value
 
-def basis_get_default_matsus_ext(basis, positive_only, n_points, points):
+def basis_get_default_matsus_ext(basis, positive_only, points):
+    n_points = len(points)
     n_points_returned = c_int()
     status = _lib.spir_basis_get_default_matsus_ext(basis, c_bool(positive_only), n_points, points.ctypes.data_as(POINTER(c_int64)), byref(n_points_returned))
     if status != COMPUTATION_SUCCESS:
@@ -580,17 +590,18 @@ def matsubara_sampling_new(basis, positive_only=False, sampling_points=None):
 
     return sampling
 
-def matsubara_sampling_new_with_matrix(basis, statistics, sampling_points, matrix, positive_only=False):
+def matsubara_sampling_new_with_matrix(statistics, basis_size, positive_only, sampling_points, matrix):
     """Create a new Matsubara sampling object with a matrix."""
     status = c_int()
     sampling = _lib.spir_matsu_sampling_new_with_matrix(
-        SPIR_ORDER_ROW_MAJOR,
-        _statistics_to_c(statistics),
-        basis.size,
-        positive_only,
-        sampling_points.ctypes.data_as(POINTER(c_int64)),
-        matrix.ctypes.data_as(POINTER(c_double_complex)),
-        byref(status)
+        SPIR_ORDER_ROW_MAJOR,                           # order
+        _statistics_to_c(statistics),                   # statistics
+        c_int(basis_size),                              # basis_size
+        c_bool(positive_only),                          # positive_only
+        c_int(len(sampling_points)),                    # num_points
+        sampling_points.ctypes.data_as(POINTER(c_int64)), # points
+        matrix.ctypes.data_as(POINTER(c_double_complex)), # matrix
+        byref(status)                                   # status
     )
     if status.value != COMPUTATION_SUCCESS:
         raise RuntimeError(f"Failed to create Matsubara sampling: {status.value}")

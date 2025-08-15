@@ -178,7 +178,15 @@ class MatsubaraSampling:
 
         if isinstance(basis, augment.AugmentedBasis):
             # Create sampling object
-            self._ptr = matsubara_sampling_new_with_matrix(basis._basis._ptr, basis.statistics, self.sampling_points, matrix)
+            matrix = basis.uhat(self.sampling_points).T
+
+            self._ptr = matsubara_sampling_new_with_matrix(
+                basis.statistics,
+                basis._basis.size,
+                positive_only,
+                self.sampling_points,
+                matrix
+            )
         else:
             # Create sampling object
             self._ptr = matsubara_sampling_new(basis._ptr, positive_only, self.sampling_points)
@@ -260,8 +268,7 @@ class MatsubaraSampling:
         )
         if status != COMPUTATION_SUCCESS:
             raise RuntimeError(f"Failed to fit sampling: {status}")
-
-        return output['real'] + 1j * output['imag']
+        return output['real']
 
     @property
     def cond(self):
