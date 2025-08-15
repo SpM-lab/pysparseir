@@ -121,12 +121,32 @@ class AugmentedBasis(abstract.AbstractBasis):
 
         return basis_get_default_tau_sampling_points_ext(self._basis._ptr, npoints)
 
-    def default_matsubara_sampling_points(self, *, npoints=None,
-                                          positive_only=False):
-        if npoints is None:
-            npoints = self.size
-        return self._basis.default_matsubara_sampling_points(
-                                npoints=npoints, positive_only=positive_only)
+    def default_matsubara_sampling_points(self, *, positive_only=False):
+        """julia-impl
+        function default_matsubara_sampling_points(basis::AugmentedBasis; positive_only=false)
+            n_points = Ref{Cint}(0)
+            status = spir_basis_get_n_default_matsus_ext(_get_ptr(basis.basis), positive_only, length(basis), n_points)
+            status == SPIR_COMPUTATION_SUCCESS || error("Failed to get number of default Matsubara sampling points")
+            points = Vector{Int64}(undef, n_points[])
+            n_points_returned = Ref{Cint}(0)
+            status = spir_basis_get_default_matsus_ext(_get_ptr(basis.basis), positive_only, length(basis), points, n_points_returned)
+            status == SPIR_COMPUTATION_SUCCESS || error("Failed to get default Matsubara sampling points")
+            n_points_returned[] == n_points[] || error("n_points_returned=$(n_points_returned[]) != n_points=$(n_points[])")
+            return points
+        end
+        """
+        n_points = c_int()
+        status = basis_get_n_default_matsus_ext(self._basis._ptr, positive_only, self.size, byref(n_points))
+        if status != COMPUTATION_SUCCESS:
+            raise RuntimeError(f"Failed to get number of default Matsubara sampling points: {status}")
+        points = np.zeros(n_points, dtype=np.int64)
+        n_points_returned = c_int()
+        status = basis_get_default_matsus_ext(self._basis._ptr, positive_only, self.size, points, byref(n_points_returned))
+        if status != COMPUTATION_SUCCESS:
+            raise RuntimeError(f"Failed to get default Matsubara sampling points: {status}")
+        if n_points_returned.value != n_points.value:
+            raise RuntimeError(f"n_points_returned={n_points_returned.value} != n_points={n_points.value}")
+        return points
 
     @property
     def is_well_conditioned(self):

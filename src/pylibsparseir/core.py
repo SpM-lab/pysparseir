@@ -150,8 +150,14 @@ def _setup_prototypes():
     _lib.spir_basis_get_n_default_matsus.argtypes = [spir_basis, c_bool, POINTER(c_int)]
     _lib.spir_basis_get_n_default_matsus.restype = c_int
 
+    _lib.spir_basis_get_n_default_matsus_ext.argtypes = [spir_basis, c_bool, c_int, POINTER(c_int)]
+    _lib.spir_basis_get_n_default_matsus_ext.restype = c_int
+
     _lib.spir_basis_get_default_matsus.argtypes = [spir_basis, c_bool, POINTER(c_int64)]
     _lib.spir_basis_get_default_matsus.restype = c_int
+
+    _lib.spir_basis_get_default_matsus_ext.argtypes = [spir_basis, c_bool, c_int, POINTER(c_int64), POINTER(c_int)]
+    _lib.spir_basis_get_default_matsus_ext.restype = c_int
 
     # Sampling objects
     _lib.spir_tau_sampling_new.argtypes = [spir_basis, c_int, POINTER(c_double), POINTER(c_int)]
@@ -493,6 +499,21 @@ def basis_get_default_matsubara_sampling_points(basis, positive_only=False):
     if status != COMPUTATION_SUCCESS:
         raise RuntimeError(f"Failed to get default Matsubara points: {status}")
 
+    return points
+
+def basis_get_n_default_matsus_ext(basis, positive_only):
+    """Get the number of default Matsubara sampling points for a basis."""
+    n_points = c_int()
+    status = _lib.spir_basis_get_n_default_matsus_ext(basis, c_bool(positive_only), n_points, byref(n_points))
+    if status != COMPUTATION_SUCCESS:
+        raise RuntimeError(f"Failed to get number of default Matsubara points: {status}")
+    return n_points.value
+
+def basis_get_default_matsus_ext(basis, positive_only, n_points, points):
+    n_points_returned = c_int()
+    status = _lib.spir_basis_get_default_matsus_ext(basis, c_bool(positive_only), n_points, points.ctypes.data_as(POINTER(c_int64)), byref(n_points_returned))
+    if status != COMPUTATION_SUCCESS:
+        raise RuntimeError(f"Failed to get default Matsubara points: {status}")
     return points
 
 def tau_sampling_new(basis, sampling_points=None):

@@ -25,6 +25,7 @@ def test_augmented_bosonic_basis():
 
     # This illustrates that "naive" fitting is a problem if the fitting matrix
     # is not well-conditioned.
+    # TODO: implement tau_sampl.matrix
     gl_fit_bad = np.linalg.pinv(tau_smpl.matrix) @ gtau
     gtau_reconst_bad = tau_smpl.evaluate(gl_fit_bad)
     assert not np.allclose(gtau_reconst_bad, gtau, atol=1e-13 * magn, rtol=0)
