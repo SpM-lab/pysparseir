@@ -37,8 +37,6 @@ class TauSampling:
         if isinstance(basis, augment.AugmentedBasis):
             # Create sampling object
             matrix = basis.u(self.sampling_points).T
-            print("matrix=", matrix)
-            print("matrix.shape=", matrix.shape)
             self._ptr = tau_sampling_new_with_matrix(basis, basis.statistics, self.sampling_points, matrix)
         else:
             # Create sampling object
@@ -178,9 +176,8 @@ class MatsubaraSampling:
         else:
             self.sampling_points = np.asarray(sampling_points, dtype=np.int64)
 
-        if isinstance(basis, AugmentedBasis):
+        if isinstance(basis, augment.AugmentedBasis):
             # Create sampling object
-            matrix = basis.u(self.sampling_points).T
             self._ptr = matsubara_sampling_new_with_matrix(basis._basis._ptr, basis.statistics, self.sampling_points, matrix)
         else:
             # Create sampling object

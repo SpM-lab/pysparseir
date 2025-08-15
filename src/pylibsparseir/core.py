@@ -523,14 +523,14 @@ def _statistics_to_c(statistics):
     else:
         raise ValueError(f"Invalid statistics: {statistics}")
 
-def tau_sampling_new_with_matrix(basis, statistics, sampling_points, matrix, positive_only=False):
+def tau_sampling_new_with_matrix(basis, statistics, sampling_points, matrix):
     """Create a new tau sampling object with a matrix."""
     status = c_int()
     sampling = _lib.spir_tau_sampling_new_with_matrix(
         SPIR_ORDER_ROW_MAJOR,
         _statistics_to_c(statistics),
         basis.size,
-        positive_only,
+        sampling_points.size,
         sampling_points.ctypes.data_as(POINTER(c_double)),
         matrix.ctypes.data_as(POINTER(c_double)),
         byref(status)
