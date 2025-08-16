@@ -85,7 +85,7 @@ class TestCAPICoreFixed:
 
     def test_basis_constructors(self):
         """Test basis construction for different statistics"""
-        for stats, stats_val in [("fermionic", SPIR_SPIR_STATISTICS_FERMIONIC),
+        for stats, stats_val in [("fermionic", SPIR_STATISTICS_FERMIONIC),
                                 ("bosonic", SPIR_STATISTICS_BOSONIC)]:
             status = c_int()
             beta = 2.0
@@ -323,7 +323,7 @@ class TestBasisFunctionEvaluation:
 
         return basis, COMPUTATION_SUCCESS
 
-    @pytest.mark.parametrize("statistics", [SPIR_SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
+    @pytest.mark.parametrize("statistics", [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC])
     def test_basis_functions_comprehensive(self, statistics):
         """Test comprehensive basis function evaluation matching Julia tests"""
         beta = 2.0
@@ -436,7 +436,7 @@ class TestBasisFunctionEvaluation:
 
     def test_basis_statistics_verification(self):
         """Test basis statistics retrieval for both fermionic and bosonic cases"""
-        for stats_val, expected in [(SPIR_SPIR_STATISTICS_FERMIONIC, SPIR_SPIR_STATISTICS_FERMIONIC),
+        for stats_val, expected in [(SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_FERMIONIC),
                                    (SPIR_STATISTICS_BOSONIC, SPIR_STATISTICS_BOSONIC)]:
             beta = 2.0
             wmax = 1.0
@@ -456,9 +456,9 @@ class TestBasisFunctionEvaluation:
 
     def test_basis_constructor_with_sve_patterns(self):
         """Test different basis constructor patterns with explicit SVE"""
-        for statistics in [SPIR_SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC]:
+        for statistics in [SPIR_STATISTICS_FERMIONIC, SPIR_STATISTICS_BOSONIC]:
             for use_reg_bose in [False, True]:
-                if use_reg_bose and statistics == SPIR_SPIR_STATISTICS_FERMIONIC:
+                if use_reg_bose and statistics == SPIR_STATISTICS_FERMIONIC:
                     continue  # Skip invalid combination
 
                 beta = 2.0
