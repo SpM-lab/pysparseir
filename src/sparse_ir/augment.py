@@ -254,7 +254,7 @@ class TauConst(AbstractAugmentation):
         self._beta = beta
 
     def __call__(self, tau):
-        tau = _util.check_range(tau, 0, self._beta)
+        tau = _util.check_range(tau, -self._beta, self._beta)
         return np.broadcast_to(1 / np.sqrt(self._beta), tau.shape)
 
     def deriv(self, n=1):
@@ -282,7 +282,7 @@ class TauLinear(AbstractAugmentation):
         self._norm = np.sqrt(3/beta)
 
     def __call__(self, tau):
-        tau = _util.check_range(tau, 0, self._beta)
+        tau = _util.check_range(tau, -self._beta, self._beta)
         x = 2/self._beta * tau - 1
         return self._norm * x
 
@@ -314,7 +314,7 @@ class MatsubaraConst(AbstractAugmentation):
         self._beta = beta
 
     def __call__(self, tau):
-        tau = _util.check_range(tau, 0, self._beta)
+        tau = _util.check_range(tau, -self._beta, self._beta)
         return np.broadcast_to(np.nan, tau.shape)
 
     def deriv(self, n=1):
