@@ -67,6 +67,7 @@ class TauSampling:
         ndarray
             Values at sampling points
         """
+        al = np.ascontiguousarray(al)
         output_dims = list(al.shape)
         ndim = len(output_dims)
         input_dims = np.asarray(al.shape, dtype=np.int32)
@@ -108,6 +109,7 @@ class TauSampling:
         """
         Fit basis coefficients from sampling point values.
         """
+        ax = np.ascontiguousarray(ax)
         ndim = len(ax.shape)
         input_dims = np.asarray(ax.shape, dtype=np.int32)
         output_dims = list(ax.shape)
