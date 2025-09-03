@@ -1,7 +1,7 @@
 # ---
 # jupyter:
 #   jupytext:
-#     cell_metadata_filter: -all
+#     cell_metadata_filter: title,cell_depth,-all
 #     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
@@ -19,7 +19,7 @@ import numpy as np
 import scipy as sc
 import scipy.optimize
 from warnings import warn
-import pylibsparseir as sparse_ir
+import sparse_ir
 # %matplotlib inline
 import matplotlib.pyplot as plt
 
@@ -68,6 +68,8 @@ class Mesh:
         # frequency mesh (for Green function)
         self.iwn_f = 1j * self.IR_basis_set.wn_f * np.pi * T
         self.iwn_f_ = np.tensordot(self.iwn_f, np.ones(nk), axes=0)
+
+        print(self.IR_basis_set.smpl_tau_f.sampling_points)
 
         # ek mesh
         self.ek_ = np.tensordot(np.ones(len(self.iwn_f)), self.ek, axes=0)
@@ -143,7 +145,7 @@ class FLEXSolver:
         self.ckio_calc()
 
 
-    #%%%%%%%%%%% Loop solving instance
+    # Loop solving instance
     def solve(self):
         """ FLEXSolver.solve() executes FLEX loop until convergence """
         # check whether U < U_crit! Otherwise, U needs to be renormalized.
@@ -181,7 +183,7 @@ class FLEXSolver:
         self.ckio_calc()
 
 
-    #%%%%%%%%%%% U renormalization loop instance
+    # U renormalization loop instance
     def U_renormalization(self):
         """ Loop for renormalizing U if Stoner enhancement U*max{chi0} >= 1. """
         print('WARNING: U is too large and the spin susceptibility denominator will diverge/turn unphysical!')
@@ -212,7 +214,7 @@ class FLEXSolver:
         print('Leaving U renormalization...')
 
 
-    #%%%%%%%%%%% Calculation steps
+    # Calculation steps
     def gkio_calc(self, mu):
         """ calculate Green function G(iw,k) """
         self.gkio = (self.mesh.iwn_f_ - (self.mesh.ek_ - mu) - self.sigma)**(-1)
@@ -225,7 +227,7 @@ class FLEXSolver:
 
     def ckio_calc(self):
         """ Calculate irreducible susciptibility chi0(iv,q) """
-        ckio = self.grit * self.grit[::-1, :]
+        ckio = self.grit * (self.grit[::-1, :]) # changed for libsparseir
 
         # Fourier transform
         ckio = self.mesh.r_to_k(ckio)
@@ -258,7 +260,7 @@ class FLEXSolver:
         self.sigma = self.mesh.tau_to_wn('F', sigma)
 
 
-    #%%%%%%%%%%% Setting chemical potential mu
+    # Setting chemical potential mu
     def calc_electron_density(self, mu):
         """ Calculate electron density from Green function """
         self.gkio_calc(mu)
@@ -280,7 +282,7 @@ class FLEXSolver:
 
 # %%
 # initialize calculation
-IR_basis_set = sparse_ir.FiniteTempBasisSet(beta, wmax, eps=IR_tol)
+IR_basis_set = sparse_ir.FiniteTempBasisSet(beta, wmax, eps=IR_tol, use_positive_taus=True)
 mesh = Mesh(IR_basis_set, nk1, nk2)
 solver = FLEXSolver(mesh, U, n, sigma_init=0, sfc_tol=sfc_tol, maxiter=maxiter, U_maxiter=U_maxiter, mix=mix)
 
@@ -369,7 +371,6 @@ class LinearizedGapSolver:
             if abs(self.lam-lam_old) < self.sfc_tol:
                 break
 
-    #%%%%%%%%%%% Calculation steps
     def V_singlet_calc(self):
         """ Set up interaction in real space and imaginary time """
 
@@ -434,8 +435,7 @@ ax.set_title('Re $F(k,i\omega_0)$')
 plt.colorbar()
 plt.show()
 
-# %%
-#%%%%%%%%%%%%%%% Parameter settings
+# %%%%%%%%%%%%%%% Parameter settings
 print('Initialization...')
 # system parameters
 t    = 1      # hopping amplitude
@@ -468,7 +468,7 @@ lam_T     = np.empty((len(T_values)))
 chiSmax_T = np.empty((len(T_values)))
 
 
-#%%%%%%%%%%%%%%% Calculation for different T values
+# %%%%%%%%%%%%%%% Calculation for different T values
 for T_it, T in enumerate(T_values):
     print("Now: T = {}".format(T))
     beta = 1/T
@@ -495,7 +495,7 @@ for T_it, T in enumerate(T_values):
         chi_s_plt = np.real(solver.chi_spin)[mesh.iw0_b].reshape(mesh.nk1,mesh.nk2)
 
 # %%
-#%%%%%%%%%%%%%%%% Plot results in a combined figure
+# %%%%%%%%%%%%%%%% Plot results in a combined figure
 import matplotlib.gridspec as gridspec
 
 fig   = plt.figure(figsize=(10,4),constrained_layout=True)
