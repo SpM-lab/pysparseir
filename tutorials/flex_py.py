@@ -69,6 +69,8 @@ class Mesh:
         self.iwn_f = 1j * self.IR_basis_set.wn_f * np.pi * T
         self.iwn_f_ = np.tensordot(self.iwn_f, np.ones(nk), axes=0)
 
+        print(self.IR_basis_set.smpl_tau_f.sampling_points)
+
         # ek mesh
         self.ek_ = np.tensordot(np.ones(len(self.iwn_f)), self.ek, axes=0)
 
@@ -219,7 +221,7 @@ class FLEXSolver:
 
     def ckio_calc(self):
         """ Calculate irreducible susciptibility chi0(iv,q) """
-        ckio = self.grit * self.grit[::-1, :]
+        ckio = self.grit * (self.grit[::-1, :]) # changed for libsparseir
 
         # Fourier transform
         ckio = self.mesh.r_to_k(ckio)
@@ -273,7 +275,7 @@ class FLEXSolver:
 
 # %%
 # initialize calculation
-IR_basis_set = sparse_ir.FiniteTempBasisSet(beta, wmax, eps=IR_tol)
+IR_basis_set = sparse_ir.FiniteTempBasisSet(beta, wmax, eps=IR_tol, use_positive_taus=True)
 mesh = Mesh(IR_basis_set, nk1, nk2)
 solver = FLEXSolver(mesh, U, n, sigma_init=0, sfc_tol=sfc_tol, maxiter=maxiter, U_maxiter=U_maxiter, mix=mix)
 
@@ -428,7 +430,6 @@ ax.set_title('Re $F(k,i\omega_0)$')
 plt.colorbar()
 plt.show()
 
-# %%
 # %%%%%%%%%%%%%%% Parameter settings
 print('Initialization...')
 # system parameters

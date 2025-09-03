@@ -6,7 +6,7 @@ from setuptools.command.build_ext import build_ext
 
 class CMakeBuild(build_ext):
     def run(self):
-        # サブモジュールのビルド
+        # Build submodule
         build_dir = os.path.abspath(self.build_temp)
         os.makedirs(build_dir, exist_ok=True)
 
@@ -19,7 +19,7 @@ class CMakeBuild(build_ext):
 
         subprocess.check_call(['cmake', '--build', '.', '--config', 'Release'], cwd=build_dir)
 
-# sdistとwheelで異なるpackage_dataを設定
+# Set package_data differently for sdist and wheel
 if 'bdist_wheel' in sys.argv:
     package_data = {
         'pylibsparseir': ['libsparseir*.dylib', 'libsparseir*.so', 'libsparseir*.dll'],
