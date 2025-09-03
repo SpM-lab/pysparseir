@@ -1,7 +1,7 @@
 # ---
 # jupyter:
 #   jupytext:
-#     cell_metadata_filter: -all
+#     cell_metadata_filter: cell_depth,title,-all
 #     custom_cell_magics: kql
 #     text_representation:
 #       extension: .py
@@ -19,7 +19,7 @@ import numpy as np
 import scipy as sc
 import scipy.optimize
 from warnings import warn
-import pylibsparseir as sparse_ir
+import sparse_ir
 # %matplotlib inline
 import matplotlib.pyplot as plt
 
@@ -142,8 +142,6 @@ class FLEXSolver:
         self.grit_calc()
         self.ckio_calc()
 
-
-    #%%%%%%%%%%% Loop solving instance
     def solve(self):
         """ FLEXSolver.solve() executes FLEX loop until convergence """
         # check whether U < U_crit! Otherwise, U needs to be renormalized.
@@ -180,8 +178,6 @@ class FLEXSolver:
         self.grit_calc()
         self.ckio_calc()
 
-
-    #%%%%%%%%%%% U renormalization loop instance
     def U_renormalization(self):
         """ Loop for renormalizing U if Stoner enhancement U*max{chi0} >= 1. """
         print('WARNING: U is too large and the spin susceptibility denominator will diverge/turn unphysical!')
@@ -211,8 +207,6 @@ class FLEXSolver:
                 break
         print('Leaving U renormalization...')
 
-
-    #%%%%%%%%%%% Calculation steps
     def gkio_calc(self, mu):
         """ calculate Green function G(iw,k) """
         self.gkio = (self.mesh.iwn_f_ - (self.mesh.ek_ - mu) - self.sigma)**(-1)
@@ -257,8 +251,6 @@ class FLEXSolver:
         sigma = self.mesh.r_to_k(sigma)
         self.sigma = self.mesh.tau_to_wn('F', sigma)
 
-
-    #%%%%%%%%%%% Setting chemical potential mu
     def calc_electron_density(self, mu):
         """ Calculate electron density from Green function """
         self.gkio_calc(mu)
@@ -277,6 +269,7 @@ class FLEXSolver:
         f  = lambda mu : n_calc(mu) - n0
 
         self.mu = sc.optimize.brentq(f, np.amax(self.mesh.ek)*3, np.amin(self.mesh.ek)*3)
+
 
 # %%
 # initialize calculation
@@ -369,7 +362,6 @@ class LinearizedGapSolver:
             if abs(self.lam-lam_old) < self.sfc_tol:
                 break
 
-    #%%%%%%%%%%% Calculation steps
     def V_singlet_calc(self):
         """ Set up interaction in real space and imaginary time """
 
@@ -388,6 +380,8 @@ class LinearizedGapSolver:
         # Fourier transform
         frit = self.mesh.k_to_r(self.fkio)
         self.frit = self.mesh.wn_to_tau('F', frit)
+
+# %%%%%%%%%%% Calculation steps
 
 
 # %%
@@ -435,7 +429,7 @@ plt.colorbar()
 plt.show()
 
 # %%
-#%%%%%%%%%%%%%%% Parameter settings
+# %%%%%%%%%%%%%%% Parameter settings
 print('Initialization...')
 # system parameters
 t    = 1      # hopping amplitude
@@ -468,7 +462,7 @@ lam_T     = np.empty((len(T_values)))
 chiSmax_T = np.empty((len(T_values)))
 
 
-#%%%%%%%%%%%%%%% Calculation for different T values
+# %%%%%%%%%%%%%%% Calculation for different T values
 for T_it, T in enumerate(T_values):
     print("Now: T = {}".format(T))
     beta = 1/T
@@ -494,8 +488,7 @@ for T_it, T in enumerate(T_values):
     if T == 0.03:
         chi_s_plt = np.real(solver.chi_spin)[mesh.iw0_b].reshape(mesh.nk1,mesh.nk2)
 
-# %%
-#%%%%%%%%%%%%%%%% Plot results in a combined figure
+# %%%%%%%%%%%%%%%% Plot results in a combined figure
 import matplotlib.gridspec as gridspec
 
 fig   = plt.figure(figsize=(10,4),constrained_layout=True)
